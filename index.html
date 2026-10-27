@@ -26,17 +26,18 @@
       <span class="eyebrow">Annual budget</span>
       <div class="seg" role="group" aria-label="Budget version" id="ver-seg"></div>
     </div>
-    <div class="ctl grow">
+    <div class="ctl">
       <label class="eyebrow" for="supply">Brand (supply) share of acquisition</label>
       <div class="slide"><input type="range" id="supply" min="5" max="40" step="1"><output id="supply-o"></output></div>
       <span class="hint" id="supply-hint"></span>
     </div>
-    <div class="ctl grow">
+    <div class="ctl">
       <label class="eyebrow" for="winback">Retargeting &amp; win-back share</label>
       <div class="slide"><input type="range" id="winback" min="0" max="25" step="1"><output id="winback-o"></output></div>
       <span class="hint" id="winback-hint"></span>
     </div>
     <div class="ctl btns">
+      <button class="btn" id="pdf" type="button">Download PDF</button>
       <button class="btn ghost" id="copy-csv" type="button">Copy plan as CSV</button>
       <button class="btn ghost" id="reset" type="button">Reset to example</button>
     </div>

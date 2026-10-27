@@ -65,10 +65,21 @@ header.top .sub{color:var(--hero-sub);max-width:72ch;font-size:13.5px;margin-top
 .pill{align-self:flex-start;font-size:11px;font-weight:600;border:1px solid var(--rose-line);background:var(--surface);color:var(--rose);border-radius:999px;padding:6px 12px}
 
 /* controls */
-.controls{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow)}
-.ctl{display:flex;flex-direction:column;gap:6px;min-width:0}
-.ctl.grow{flex:1 1 220px}
-.ctl.btns{flex-direction:row;flex-wrap:wrap;gap:8px;margin-left:auto}
+.controls{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;grid-template-rows:auto auto auto;gap:6px 28px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow)}
+/* each control spans the same three rows (label, control, hint) so labels, sliders and hints line up across columns */
+.ctl{display:grid;grid-row:span 3;grid-template-rows:subgrid;min-width:0}
+.ctl>.eyebrow{align-self:end}
+.ctl>.seg,.ctl>.slide{align-self:center}
+.ctl.btns{display:flex;flex-direction:column;gap:8px;align-self:center}
+.ctl.btns .btn{width:100%}
+@media (max-width:900px){
+  .controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:none;gap:6px 24px}
+  .ctl:first-child,.ctl.btns{grid-column:1/-1}
+  .ctl:first-child{margin-bottom:10px}
+  .ctl.btns{flex-direction:row;flex-wrap:wrap;margin-top:10px}
+  .ctl.btns .btn{width:auto}
+}
+@media (max-width:560px){.controls{grid-template-columns:minmax(0,1fr)}.ctl{margin-bottom:10px}}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--muted);background:var(--surface);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -172,6 +183,12 @@ td input:focus,.field input:focus{border-color:var(--rose);outline:2px solid var
 .funnel .v{font-family:var(--f-display);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
 .funnel .k{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;max-width:95ch}
+
+/* PDF export: freeze the light look and hide the controls that do nothing on paper */
+body.exporting .ctl.btns,body.exporting .status,body.exporting [data-act]{visibility:hidden}
+body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColor;color:var(--rose)}
+body.exporting .slide input{display:none}
+body.exporting .slide output{text-align:left;font-size:18px}
 </style>
 </head>
 <body>
@@ -190,17 +207,18 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
       <span class="eyebrow">Annual budget</span>
       <div class="seg" role="group" aria-label="Budget version" id="ver-seg"></div>
     </div>
-    <div class="ctl grow">
+    <div class="ctl">
       <label class="eyebrow" for="supply">Brand (supply) share of acquisition</label>
       <div class="slide"><input type="range" id="supply" min="5" max="40" step="1"><output id="supply-o"></output></div>
       <span class="hint" id="supply-hint"></span>
     </div>
-    <div class="ctl grow">
+    <div class="ctl">
       <label class="eyebrow" for="winback">Retargeting &amp; win-back share</label>
       <div class="slide"><input type="range" id="winback" min="0" max="25" step="1"><output id="winback-o"></output></div>
       <span class="hint" id="winback-hint"></span>
     </div>
     <div class="ctl btns">
+      <button class="btn" id="pdf" type="button">Download PDF</button>
       <button class="btn ghost" id="copy-csv" type="button">Copy plan as CSV</button>
       <button class="btn ghost" id="reset" type="button">Reset to example</button>
     </div>
@@ -787,6 +805,8 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
     } else if (act === 'reset') {
       if (b.dataset.armed) { S = M.clone(M.DEFAULTS); delete b.dataset.armed; b.textContent = 'Reset to example'; render(); flash('Example plan restored.'); }
       else { b.dataset.armed = '1'; b.textContent = 'Click again to reset'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Reset to example'; }, 4000); }
+    } else if (act === 'pdf') {
+      exportPDF(b);
     } else if (act === 'copy-csv') {
       const t = M.plan(S), q = s => `"${String(s).replace(/"/g, '""')}"`;
       const lines = [['Type', 'Side', 'Line', 'Spend', 'Attributed', 'Incremental', 'iCAC', 'Marginal iCAC', 'LTV', 'Contribution'].join(',')]
@@ -798,6 +818,46 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
     }
   });
+
+  // ---------- PDF export ----------
+  // Every tab, one after another, in the light theme, landscape A4. Libraries load on first use only.
+  const LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
+  const loadScript = src => new Promise((ok, fail) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => fail(new Error('Could not load ' + src)); document.head.appendChild(el); });
+  async function exportPDF(btn) {
+    const label = btn.textContent, root = document.documentElement, theme = root.getAttribute('data-theme'), was = tab;
+    btn.disabled = true; btn.textContent = 'Building PDF…';
+    try {
+      for (const src of LIBS) await loadScript(src);
+      const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+      const W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight(), m = 24;
+      root.setAttribute('data-theme', 'light'); document.body.classList.add('exporting');
+      const bg = getComputedStyle(document.body).backgroundColor;
+      let first = true;
+      for (const [id, name] of TABS) {
+        tab = id; render();
+        await new Promise(r => setTimeout(r, 60));
+        const canvas = await window.html2canvas(document.querySelector('.wrap'), { scale: 1.5, backgroundColor: bg, windowWidth: 1400, width: Math.min(document.querySelector('.wrap').scrollWidth, 1500) });
+        // Slice the tall capture into page-height strips.
+        const pxPerPt = canvas.width / (W - m * 2), sliceH = Math.floor((H - m * 2) * pxPerPt);
+        for (let y = 0; y < canvas.height; y += sliceH) {
+          const part = document.createElement('canvas'); part.width = canvas.width; part.height = Math.min(sliceH, canvas.height - y);
+          part.getContext('2d').drawImage(canvas, 0, y, canvas.width, part.height, 0, 0, canvas.width, part.height);
+          if (!first) pdf.addPage(); first = false;
+          pdf.setFillColor(...(bg.match(/\d+/g) || [255, 255, 255]).slice(0, 3).map(Number)); pdf.rect(0, 0, W, H, 'F');
+          pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', m, m, W - m * 2, part.height / pxPerPt);
+          pdf.setFontSize(8); pdf.setTextColor(125, 116, 105); pdf.text(`${name} · ${S.version} plan · illustrative`, m, H - 10);
+        }
+      }
+      pdf.save(`marketplace-paid-media-plan-${S.version}.pdf`);
+      flash('PDF downloaded: every tab, landscape A4.');
+    } catch (err) {
+      flash('The PDF could not be built: ' + err.message + '. Check the connection and try again.');
+    } finally {
+      document.body.classList.remove('exporting');
+      if (theme == null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme);
+      tab = was; render(); btn.disabled = false; btn.textContent = label;
+    }
+  }
 
   window.addEventListener('hashchange', () => { tab = tabFromHash(); render(); });
   render();

@@ -15,6 +15,8 @@ The example plan is built around a wholesale marketplace like Faire. **Every num
 | **International** | Spend, customers, iCAC, GMV and payback by market, with a Test → Scaling → Core launch sequence. |
 | **Unit economics** | Retailer and brand LTV inputs (order size, reorder rate, take rate, retention, margin), the supply-depth network effect, the balance band and the budget versions. |
 
+**Download PDF** saves every tab as a landscape A4 PDF in the light theme (it loads html2canvas and jsPDF from cdnjs on first use). **Copy plan as CSV** copies the channel and win-back lines for a spreadsheet.
+
 The controls at the top set the budget version ($20M, $50M or $100M by default), the brand (supply) share of acquisition and the win-back share. The Summary tab also scans for the brand share that returns the most lifetime contribution.
 
 ## How the model works

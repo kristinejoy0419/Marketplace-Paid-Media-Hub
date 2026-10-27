@@ -348,6 +348,8 @@
     } else if (act === 'reset') {
       if (b.dataset.armed) { S = M.clone(M.DEFAULTS); delete b.dataset.armed; b.textContent = 'Reset to example'; render(); flash('Example plan restored.'); }
       else { b.dataset.armed = '1'; b.textContent = 'Click again to reset'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Reset to example'; }, 4000); }
+    } else if (act === 'pdf') {
+      exportPDF(b);
     } else if (act === 'copy-csv') {
       const t = M.plan(S), q = s => `"${String(s).replace(/"/g, '""')}"`;
       const lines = [['Type', 'Side', 'Line', 'Spend', 'Attributed', 'Incremental', 'iCAC', 'Marginal iCAC', 'LTV', 'Contribution'].join(',')]
@@ -359,6 +361,46 @@
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
     }
   });
+
+  // ---------- PDF export ----------
+  // Every tab, one after another, in the light theme, landscape A4. Libraries load on first use only.
+  const LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
+  const loadScript = src => new Promise((ok, fail) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => fail(new Error('Could not load ' + src)); document.head.appendChild(el); });
+  async function exportPDF(btn) {
+    const label = btn.textContent, root = document.documentElement, theme = root.getAttribute('data-theme'), was = tab;
+    btn.disabled = true; btn.textContent = 'Building PDF…';
+    try {
+      for (const src of LIBS) await loadScript(src);
+      const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+      const W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight(), m = 24;
+      root.setAttribute('data-theme', 'light'); document.body.classList.add('exporting');
+      const bg = getComputedStyle(document.body).backgroundColor;
+      let first = true;
+      for (const [id, name] of TABS) {
+        tab = id; render();
+        await new Promise(r => setTimeout(r, 60));
+        const canvas = await window.html2canvas(document.querySelector('.wrap'), { scale: 1.5, backgroundColor: bg, windowWidth: 1400, width: Math.min(document.querySelector('.wrap').scrollWidth, 1500) });
+        // Slice the tall capture into page-height strips.
+        const pxPerPt = canvas.width / (W - m * 2), sliceH = Math.floor((H - m * 2) * pxPerPt);
+        for (let y = 0; y < canvas.height; y += sliceH) {
+          const part = document.createElement('canvas'); part.width = canvas.width; part.height = Math.min(sliceH, canvas.height - y);
+          part.getContext('2d').drawImage(canvas, 0, y, canvas.width, part.height, 0, 0, canvas.width, part.height);
+          if (!first) pdf.addPage(); first = false;
+          pdf.setFillColor(...(bg.match(/\d+/g) || [255, 255, 255]).slice(0, 3).map(Number)); pdf.rect(0, 0, W, H, 'F');
+          pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', m, m, W - m * 2, part.height / pxPerPt);
+          pdf.setFontSize(8); pdf.setTextColor(125, 116, 105); pdf.text(`${name} · ${S.version} plan · illustrative`, m, H - 10);
+        }
+      }
+      pdf.save(`marketplace-paid-media-plan-${S.version}.pdf`);
+      flash('PDF downloaded: every tab, landscape A4.');
+    } catch (err) {
+      flash('The PDF could not be built: ' + err.message + '. Check the connection and try again.');
+    } finally {
+      document.body.classList.remove('exporting');
+      if (theme == null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme);
+      tab = was; render(); btn.disabled = false; btn.textContent = label;
+    }
+  }
 
   window.addEventListener('hashchange', () => { tab = tabFromHash(); render(); });
   render();
