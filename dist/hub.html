@@ -299,6 +299,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
 /* marketplace budgets run to eight figures: give the rail's $ fields room */
 .li.mkt{grid-template-columns:auto minmax(72px,1fr) 46px 104px 38px auto}
 .li.mkt input[type=number],.li.ch input[type=number]{font-size:11px;padding-left:4px!important;padding-right:4px!important;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.mp-tip{cursor:help;border-bottom:1px dotted currentColor}
 </style>
 </head>
 <body>
@@ -2683,6 +2684,16 @@ function input(R){
 const planOf=R=>M.plan(input(R));
 window.mpPlan=planOf;
 
+// Hover definitions for the growth metrics (how the model computes each one)
+const TIP={
+ budget:'Total paid media spend for this version: retailer acquisition + brand acquisition + retargeting & win-back.',
+ retailers:'Incremental new retailers: shops that sign up and place a first order because of paid media. Platform-reported customers × incrementality (lift test read where one exists, otherwise MMM), with CAC rising as spend grows.',
+ rICAC:'Retailer incremental CAC = retailer acquisition spend ÷ incremental new retailers.',
+ brands:'Incremental new brands: brands onboarded and activated because of paid media, discounted for incrementality the same way.',
+ bICAC:'Brand incremental CAC = brand acquisition spend ÷ incremental new brands.',
+ gmv:'First-year GMV: wholesale order value in the first 12 months from new retailers (first order + reorders), net-new GMV from new brands, retailers those brands bring, and incremental win-back reorders.',
+ payback:'Retailer payback = retailer iCAC ÷ monthly first-year contribution per retailer (take rate × GMV × contribution margin ÷ 12). Months until a new retailer pays back what it cost to acquire.',
+ roi:'Contribution per $ = lifetime contribution (take rate × GMV × contribution margin, over the LTV horizon) from incremental retailers, brands and win-back, per $1 of media. Above 1× the media pays for itself over that horizon.'};
 /* ---------- small builders ---------- */
 const tile=(v,k,cls='',tip='')=>`<div class="tile ${cls}"${tip?` title="${esc(tip)}"`:''}><span class="v">${v}</span><span class="k">${k}</span></div>`;
 // editable number: path = "retailer.firstAOV" etc.; kind: pct (stored 0–1, shown %), m ($M), raw
@@ -2708,9 +2719,9 @@ function renderGrowth(R){const t=planOf(R),k=t.kpi,P=t.p,best=M.bestSupplyShare(
  <div><div class="eyebrow">${esc(TIERNAME[R.tier])} version · two-sided growth plan</div><h2 style="font-size:20px;margin-top:2px">${money(t.total)} buys ${n0(k.newRetailers)} incremental retailers and ${n0(k.newBrands)} brands</h2>
  <div class="note">Spend comes straight from the media lines in this plan, split by marketplace side. Each channel's platform-reported customers are discounted to incremental ones (lift test where there is one, MMM otherwise), and CAC climbs as spend grows. Supply makes demand cheaper: ${n0(k.newBrands)} new brands on ${n0(P.network.activeBrands)} active lowers retailer CAC by ${pct(1-t.netMult)}.</div></div>
  <div class="tiles">
-  ${tile(n0(k.newRetailers),'Incremental new retailers')}${tile(usd(k.rICAC),'Retailer incremental CAC')}${tile(x1(k.rLtvCac)+' · '+mo(k.rPayback),'Retailer LTV : iCAC · payback',k.rLtvCac<3?'warn':'')}
-  ${tile(n0(k.newBrands),'Incremental new brands')}${tile(usd(k.bICAC),'Brand incremental CAC')}${tile(x1(k.bLtvCac)+' · '+mo(k.bPayback),'Brand LTV : iCAC · payback',k.bLtvCac<3?'warn':'')}
-  ${tile('$'+compact(k.gmvY1),'First-year GMV (incl. win-back, referred retailers)')}${tile(x1(k.roi),'Lifetime contribution per media $',k.roi<1?'warn':'')}${tile((isFinite(k.ratio)?Math.round(k.ratio)+' : 1':'—'),'New retailers per new brand · '+k.balance,k.balance==='balanced'?'':'warn')}
+  ${tile(n0(k.newRetailers),'Incremental new retailers','',TIP.retailers)}${tile(usd(k.rICAC),'Retailer incremental CAC','',TIP.rICAC)}${tile(x1(k.rLtvCac)+' · '+mo(k.rPayback),'Retailer LTV : iCAC · payback',k.rLtvCac<3?'warn':'')}
+  ${tile(n0(k.newBrands),'Incremental new brands','',TIP.brands)}${tile(usd(k.bICAC),'Brand incremental CAC','',TIP.bICAC)}${tile(x1(k.bLtvCac)+' · '+mo(k.bPayback),'Brand LTV : iCAC · payback',k.bLtvCac<3?'warn':'')}
+  ${tile('$'+compact(k.gmvY1),'First-year GMV (incl. win-back, referred retailers)','',TIP.gmv)}${tile(x1(k.roi),'Lifetime contribution per media $',k.roi<1?'warn':'',TIP.roi)}${tile((isFinite(k.ratio)?Math.round(k.ratio)+' : 1':'—'),'New retailers per new brand · '+k.balance,k.balance==='balanced'?'':'warn')}
  </div>
  <div class="cols">
   <div class="mp-card"><h3>Retailer vs brand split</h3><p>You are putting <strong>${pct(cur)}</strong> of acquisition into brands. The split that returns the most lifetime contribution at this budget is <strong>${pct(best.share)}</strong>${Math.abs(best.share-cur)<0.015?', so the split is already close to best.':'.'}</p>
@@ -2722,7 +2733,7 @@ function renderGrowth(R){const t=planOf(R),k=t.kpi,P=t.p,best=M.bestSupplyShare(
    <li>Win-back returns ${x1(k.wbGMV/Math.max(1,t.winbackBudget))} GMV per $ on incremental reorders only (holdout-read).</li></ul>
    <p class="note">Marginal iCAC = the cost of the last customer, not the average. Shift budget until marginal iCAC ÷ LTV is equal across channels; the Channel Incrementality tab does this for you.</p></div>
  </div>
- <div><h3 style="font-size:14px;margin-bottom:6px">Low vs Medium vs High</h3><div class="tscroll"><table><thead><tr><th>Version</th><th class="n">Budget</th><th class="n">New retailers</th><th class="n">Retailer iCAC</th><th class="n">New brands</th><th class="n">Brand iCAC</th><th class="n">First-year GMV</th><th class="n">Retailer payback</th><th class="n">Contribution per $</th></tr></thead><tbody>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Low vs Medium vs High</h3><div class="tscroll"><table><thead><tr><th>Version</th>${[['Budget','budget'],['New retailers','retailers'],['Retailer iCAC','rICAC'],['New brands','brands'],['Brand iCAC','bICAC'],['First-year GMV','gmv'],['Retailer payback','payback'],['Contribution per $','roi']].map(([n,k])=>`<th class="n"><span class="mp-tip" title="${esc(TIP[k])}">${n}</span></th>`).join('')}</tr></thead><tbody>
   ${tiers.map(x=>`<tr${x.i===R.tier?' class="mp-cur"':''}><td>${TIERNAME[x.i]}</td><td class="n">${money(x.b)}</td><td class="n">${n0(x.k.newRetailers)}</td><td class="n">${usd(x.k.rICAC)}</td><td class="n">${n0(x.k.newBrands)}</td><td class="n">${usd(x.k.bICAC)}</td><td class="n">$${compact(x.k.gmvY1)}</td><td class="n">${mo(x.k.rPayback)}</td><td class="n">${x1(x.k.roi)}</td></tr>`).join('')}</tbody></table></div>
   <div class="note" style="margin-top:6px">Doubling spend never doubles customers: CAC rises on every channel as it scales. Read the gap between versions as the cost of growth.</div></div>
  <div><h3 style="font-size:14px;margin-bottom:6px">Unit economics <span class="sub2">(edit to match your cohorts)</span></h3>

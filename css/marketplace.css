@@ -27,3 +27,4 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
 /* marketplace budgets run to eight figures: give the rail's $ fields room */
 .li.mkt{grid-template-columns:auto minmax(72px,1fr) 46px 104px 38px auto}
 .li.mkt input[type=number],.li.ch input[type=number]{font-size:11px;padding-left:4px!important;padding-right:4px!important;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.mp-tip{cursor:help;border-bottom:1px dotted currentColor}
