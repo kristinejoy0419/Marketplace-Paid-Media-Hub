@@ -1629,6 +1629,7 @@ function applyExtract(x){
   S.channels.linkedin.on=true;changes.push(CH.filter(c=>S.channels[c.id].on).length+' channels')}
  if(/^\d{4}-\d{2}-\d{2}$/.test(x.flightStart||'')){S.start=x.flightStart;changes.push('flight')}
  if(/^\d{4}-\d{2}-\d{2}$/.test(x.flightEnd||''))S.end=x.flightEnd;
+ const pc=v=>v!=null&&v!==''&&isFinite(+v)&&+v>=0&&+v<=100?+v/100:null;if(pc(x.brandShare)!=null||pc(x.winbackShare)!=null){S.split={brand:pc(x.brandShare)??S.split?.brand??0.2,winback:pc(x.winbackShare)??S.split?.winback??0.1};changes.push('marketplace split')}
  if(+x.budget>0){S.budgets={lean:Math.round(x.budget*0.45/1000)*1000,standard:Math.round(+x.budget),full:Math.round(x.budget*1.75/1000)*1000};changes.push('budgets')}
  return changes;
 }
@@ -1840,10 +1841,10 @@ agentFromLink();
 $('#agent-off').onclick=()=>{AGENT=null;try{localStorage.removeItem(AGENT_LS)}catch(e){}renderAgent();setStatus('#agent-status','Disconnected. Your key was removed from this browser.')};
 
 $('#btn-extract').onclick=()=>runExtract();
-let RUNNING=false;
-async function runExtract(){
+let RUNNING=false;window.runExtractFor=a=>runExtract(a);
+async function runExtract(answers){
  if(RUNNING)return;S.brief=$('#in-brief').value;
- const text=(S.brief||'').trim();const pdf=pdfForBrief();if(text.length<40&&!pdf){runBusy(false);return setStatus('#extract-status','Upload the GTM doc or paste its text first.',true)}
+ const text=(S.brief||'').trim()+(answers?'\n\nTHE PLANNER ANSWERED YOUR EARLIER QUESTIONS (these override the doc):\n'+answers:'');const pdf=pdfForBrief();if(text.length<40&&!pdf){runBusy(false);return setStatus('#extract-status','Upload the GTM doc or paste its text first.',true)}
  const btn=$('#btn-extract');btn.disabled=true;RUNNING=true;let ok=false;runBusy(aiReady()?'Reading the doc…':'Filling inputs…');
  const yr=(S.start||'2026').slice(0,4);
  try{
@@ -1857,7 +1858,9 @@ Reply with only JSON in exactly this shape:
  "personas":[{"role":"dm"|"tech"|"user"|"other","label":string}],
  "initiatives":[{"name":string,"stage":"Awareness"|"Consideration"|"Conversion","pillar":string}],
  "moments":[{"name":string,"month":"YYYY-MM","type":"launch"|"event"|"content","initiative":number}],
- "channels":[string],"flightStart":"YYYY-MM-DD"|null,"flightEnd":"YYYY-MM-DD"|null,"budget":number|null}
+ "channels":[string],"flightStart":"YYYY-MM-DD"|null,"flightEnd":"YYYY-MM-DD"|null,"budget":number|null,
+ "brandShare":number|null,"winbackShare":number|null,
+ "missing":[{"step":"brief"|"budget"|"markets"|"audiences"|"initiatives"|"moments"|"channels"|"copy","question":string}],"assumed":[string]}
 Rules:
 - markets: regions or countries the doc prioritizes, using names like North America, Europe, Australia, China, Japan, Korea, Southeast Asia, LATAM. weight = suggested % of paid budget, summing to 100.
 - personas: dm = the demand side (retailers / buyers to acquire), tech = the supply side (brands / sellers to acquire), user = existing and lapsed customers to retain or win back, other = any further audience the doc names (partners, agencies, etc.). label = the audience name plus short job titles from the doc.
@@ -1865,6 +1868,9 @@ Rules:
 - moments: the key milestones the doc names (product launches, releases, content drops such as reports or video series, and events), each with a month. Return [] if the doc names no dated milestones. Convert quarters to the quarter's first month unless a month is named. Year defaults to ${yr}. initiative = 0-based index into initiatives.
 - channels: choose from google, meta, tiktok, pinterest, youtube, ctv, linkedin, reddit, affiliates, creators, trade, events, retarget, wechat, baidu, naver, based on where the audiences learn about solutions and on the tactics in the doc.
 - budget: total paid media budget in USD only if the doc states one, else null. flightStart/flightEnd only if stated, else null.
+- brandShare: % of the acquisition budget for recruiting brands / sellers (supply); winbackShare: % of the total budget for retargeting and win-back. Only if the doc states or clearly implies them, else null.
+- missing: up to 8 short, specific questions about inputs the plan needs that the doc does not give (budget, the brand vs retailer split, markets, dated moments, offers, audiences), most important first, each tied to its step. Never invent budgets or targets; ask for them instead. Do not ask about anything the doc or the planner's answers already cover.
+- assumed: one short line for each value you inferred rather than read in the doc.
 
 GTM STRATEGY TEXT:
 """
@@ -1872,7 +1878,7 @@ ${text.slice(0,60000)}
 """`;
    x=await aiJSON(prompt,{pdf});how=SAMPLE?'Claude'+(pdf?', with page images':''):(AGENT.provider==='gemini'?'Gemini':'AI agent')+(pdf?', full PDF':'');
   }else{x=localExtract(text);how='keyword scan'}
-  const ch=applyExtract(x||{});clearCopyForNewBrief();renderInputs();changed();$('#exampleBadge').hidden=true;
+  const ch=applyExtract(x||{});S.setup={missing:(Array.isArray(x?.missing)?x.missing:[]).filter(m=>m&&m.question).slice(0,8).map(m=>({step:String(m.step||''),question:String(m.question),answer:''})),assumed:(Array.isArray(x?.assumed)?x.assumed:[]).map(String).slice(0,8),how,at:new Date().toLocaleDateString()};clearCopyForNewBrief();renderInputs();changed();$('#exampleBadge').hidden=true;
   setStatus('#extract-status',ch.length?`Filled from the doc (${how}): ${ch.join(', ')}. Review the sections below.`:'Nothing usable was found in the text. Fill the inputs by hand.',!ch.length);ok=ch.length>0;
   if(aiReady())draftCopy();else setStatus('#copy-status','The previous ad copy was cleared for this brief. Write new copy here.');
  }catch(e){

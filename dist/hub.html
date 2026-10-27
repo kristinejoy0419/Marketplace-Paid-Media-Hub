@@ -300,6 +300,30 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
 .li.mkt{grid-template-columns:auto minmax(72px,1fr) 46px 104px 38px auto}
 .li.mkt input[type=number],.li.ch input[type=number]{font-size:11px;padding-left:4px!important;padding-right:4px!important;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .mp-tip{cursor:help;border-bottom:1px dotted currentColor}
+/* Setup wizard (section 1 and the Summary) */
+.wz{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.wz:empty{display:none}
+.wz-title{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--rose)}
+.wz-head{display:flex;flex-direction:column;gap:6px}
+.wz-head b{font-size:13px}
+.wz-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.wz-bar i{display:block;height:100%;background:var(--rose);border-radius:99px}
+.wz-next{display:flex;flex-direction:column;gap:4px;align-items:flex-start;border:1px solid var(--rose-line);background:var(--rose-soft);border-radius:12px;padding:10px 12px;font-size:12.5px}
+.wz-next.ok{border-color:var(--line);background:none}
+.wz-next .wz-k{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--rose)}
+.wz-next .btn{margin-top:4px}
+.wz-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.wz-list li span{display:block;color:var(--muted);font-size:11.5px}
+.wz-list li.ok{color:var(--muted)}
+.wz-list li.ok::marker{content:"✓  ";color:var(--green)}
+.wz-qs{display:flex;flex-direction:column;gap:8px}
+.wz-sub b{font-size:12px;color:var(--muted)}
+.wz-as{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--muted)}
+.wz-op{display:flex;flex-direction:column;gap:10px;border:1px solid var(--rose-line);border-radius:12px;padding:14px 16px;max-width:520px}
+.rail details.wz-flash{animation:wzflash 1.6s ease-out}
+@keyframes wzflash{0%,30%{box-shadow:0 0 0 3px var(--rose)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.rail details.wz-flash{animation:none}}
+body.exporting .wz-op{display:none!important}
 </style>
 </head>
 <body>
@@ -342,6 +366,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
           <div class="btns linkrow"><button class="lnk" id="btn-extract">Fill again from this text</button><span class="sub2">·</span><button class="lnk" id="btn-reset">Reload example</button><span class="sub2">·</span><button class="lnk" id="btn-blank">Start blank</button></div>
           <div class="status" id="extract-status" role="status"></div>
           <div class="note">Uploading or pasting the doc asks the AI agent to read the brief and set markets, personas, initiatives, launch moments and channels. Everything stays editable below.</div>
+          <div class="wz" id="setup-wizard" aria-live="polite"></div>
           <details class="agent" id="d-agent">
             <summary>AI agent <span class="chip" id="agent-chip">Not connected</span></summary>
             <div class="agent-body">
@@ -357,7 +382,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
         </div>
       </details>
 
-      <details open>
+      <details id="d-budget" open>
         <summary>2 · Budget &amp; flight <span class="hint">per version</span></summary>
         <div class="sec">
           <div class="row3">
@@ -379,7 +404,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
         </div>
       </details>
 
-      <details open>
+      <details id="d-mkt" open>
         <summary>3 · Markets <span class="hint">weight % · budget · language</span></summary>
         <div class="sec">
           <div class="list" id="mkt-list"></div>
@@ -389,20 +414,20 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
         </div>
       </details>
 
-      <details>
+      <details id="d-aud">
         <summary>4 · Audiences <span class="hint">personas</span></summary>
         <div class="sec"><div class="list" id="per-list"></div>
           <div class="note">The first three drive targeting by channel; rename them to match your doc. Audiences you add apply to every channel. Type in the blank row to add one.</div></div>
       </details>
 
-      <details>
+      <details id="d-ini">
         <summary>5 · Initiatives &amp; pillars</summary>
         <div class="sec"><div class="list" id="ini-list"></div>
           <div class="btns"><button class="btn sm" id="add-ini">Add initiative</button></div>
           <div class="note">Filled from the GTM doc. Each placement uses the initiative whose funnel stage matches its own.</div></div>
       </details>
 
-      <details>
+      <details id="d-mom">
         <summary>6 · Launch moments <span class="hint">drive bursts</span></summary>
         <div class="sec"><div class="list" id="mom-list"></div>
           <div class="btns"><button class="btn sm" id="add-mom">Add moment</button></div>
@@ -410,7 +435,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
           <div class="note">Launches and content drops add weight to that month and the next. Events pull event-amplification spend into their months.</div></div>
       </details>
 
-      <details>
+      <details id="d-ch">
         <summary>7 · Channels <span class="hint">on · budget per version</span></summary>
         <div class="sec"><div class="list" id="ch-list"></div>
           <div class="bud-tot" id="ch-tot"></div><div class="status" id="ch-status" role="status"></div>
@@ -418,7 +443,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
           <div class="note">Type a dollar amount for any channel and version and it stays exactly as typed (shown in bold). The checked channels you leave blank split the rest of that version’s budget. Auto-fill clears what you typed and splits each version’s budget using the recommended mix. Each channel only runs in the markets that fit it: search, Meta, TikTok, Pinterest, YouTube, LinkedIn, Reddit and retargeting everywhere except China; CTV, partners, newsletters and podcasts in North America, Europe and Australia; WeChat and Baidu in China; Naver in Korea. Every placement belongs to one marketplace side (retailers, brands or win-back), and the split in section 2 sets how much each side gets.</div></div>
       </details>
 
-      <details>
+      <details id="d-vol">
         <summary>8 · Creative volume</summary>
         <div class="sec">
           <div class="eyebrow">Concepts per placement</div>
@@ -436,7 +461,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
         </div>
       </details>
 
-      <details>
+      <details id="d-units">
         <summary>9 · Creative units <span class="hint">by platform · specs</span></summary>
         <div class="sec">
           <div class="btns"><button class="btn sm" id="un-open">Expand / collapse all</button><button class="btn sm" id="un-all">Select all</button><button class="btn sm" id="un-none">Clear all</button></div>
@@ -447,7 +472,7 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
         </div>
       </details>
 
-      <details open>
+      <details id="d-copy" open>
         <summary>10 · Messaging &amp; ad copy <span class="hint">fills the BOM</span></summary>
         <div class="sec">
           <div class="note" id="cp-src"></div>
@@ -2339,6 +2364,7 @@ function applyExtract(x){
   S.channels.linkedin.on=true;changes.push(CH.filter(c=>S.channels[c.id].on).length+' channels')}
  if(/^\d{4}-\d{2}-\d{2}$/.test(x.flightStart||'')){S.start=x.flightStart;changes.push('flight')}
  if(/^\d{4}-\d{2}-\d{2}$/.test(x.flightEnd||''))S.end=x.flightEnd;
+ const pc=v=>v!=null&&v!==''&&isFinite(+v)&&+v>=0&&+v<=100?+v/100:null;if(pc(x.brandShare)!=null||pc(x.winbackShare)!=null){S.split={brand:pc(x.brandShare)??S.split?.brand??0.2,winback:pc(x.winbackShare)??S.split?.winback??0.1};changes.push('marketplace split')}
  if(+x.budget>0){S.budgets={lean:Math.round(x.budget*0.45/1000)*1000,standard:Math.round(+x.budget),full:Math.round(x.budget*1.75/1000)*1000};changes.push('budgets')}
  return changes;
 }
@@ -2550,10 +2576,10 @@ agentFromLink();
 $('#agent-off').onclick=()=>{AGENT=null;try{localStorage.removeItem(AGENT_LS)}catch(e){}renderAgent();setStatus('#agent-status','Disconnected. Your key was removed from this browser.')};
 
 $('#btn-extract').onclick=()=>runExtract();
-let RUNNING=false;
-async function runExtract(){
+let RUNNING=false;window.runExtractFor=a=>runExtract(a);
+async function runExtract(answers){
  if(RUNNING)return;S.brief=$('#in-brief').value;
- const text=(S.brief||'').trim();const pdf=pdfForBrief();if(text.length<40&&!pdf){runBusy(false);return setStatus('#extract-status','Upload the GTM doc or paste its text first.',true)}
+ const text=(S.brief||'').trim()+(answers?'\n\nTHE PLANNER ANSWERED YOUR EARLIER QUESTIONS (these override the doc):\n'+answers:'');const pdf=pdfForBrief();if(text.length<40&&!pdf){runBusy(false);return setStatus('#extract-status','Upload the GTM doc or paste its text first.',true)}
  const btn=$('#btn-extract');btn.disabled=true;RUNNING=true;let ok=false;runBusy(aiReady()?'Reading the doc…':'Filling inputs…');
  const yr=(S.start||'2026').slice(0,4);
  try{
@@ -2567,7 +2593,9 @@ Reply with only JSON in exactly this shape:
  "personas":[{"role":"dm"|"tech"|"user"|"other","label":string}],
  "initiatives":[{"name":string,"stage":"Awareness"|"Consideration"|"Conversion","pillar":string}],
  "moments":[{"name":string,"month":"YYYY-MM","type":"launch"|"event"|"content","initiative":number}],
- "channels":[string],"flightStart":"YYYY-MM-DD"|null,"flightEnd":"YYYY-MM-DD"|null,"budget":number|null}
+ "channels":[string],"flightStart":"YYYY-MM-DD"|null,"flightEnd":"YYYY-MM-DD"|null,"budget":number|null,
+ "brandShare":number|null,"winbackShare":number|null,
+ "missing":[{"step":"brief"|"budget"|"markets"|"audiences"|"initiatives"|"moments"|"channels"|"copy","question":string}],"assumed":[string]}
 Rules:
 - markets: regions or countries the doc prioritizes, using names like North America, Europe, Australia, China, Japan, Korea, Southeast Asia, LATAM. weight = suggested % of paid budget, summing to 100.
 - personas: dm = the demand side (retailers / buyers to acquire), tech = the supply side (brands / sellers to acquire), user = existing and lapsed customers to retain or win back, other = any further audience the doc names (partners, agencies, etc.). label = the audience name plus short job titles from the doc.
@@ -2575,6 +2603,9 @@ Rules:
 - moments: the key milestones the doc names (product launches, releases, content drops such as reports or video series, and events), each with a month. Return [] if the doc names no dated milestones. Convert quarters to the quarter's first month unless a month is named. Year defaults to ${yr}. initiative = 0-based index into initiatives.
 - channels: choose from google, meta, tiktok, pinterest, youtube, ctv, linkedin, reddit, affiliates, creators, trade, events, retarget, wechat, baidu, naver, based on where the audiences learn about solutions and on the tactics in the doc.
 - budget: total paid media budget in USD only if the doc states one, else null. flightStart/flightEnd only if stated, else null.
+- brandShare: % of the acquisition budget for recruiting brands / sellers (supply); winbackShare: % of the total budget for retargeting and win-back. Only if the doc states or clearly implies them, else null.
+- missing: up to 8 short, specific questions about inputs the plan needs that the doc does not give (budget, the brand vs retailer split, markets, dated moments, offers, audiences), most important first, each tied to its step. Never invent budgets or targets; ask for them instead. Do not ask about anything the doc or the planner's answers already cover.
+- assumed: one short line for each value you inferred rather than read in the doc.
 
 GTM STRATEGY TEXT:
 """
@@ -2582,7 +2613,7 @@ ${text.slice(0,60000)}
 """`;
    x=await aiJSON(prompt,{pdf});how=SAMPLE?'Claude'+(pdf?', with page images':''):(AGENT.provider==='gemini'?'Gemini':'AI agent')+(pdf?', full PDF':'');
   }else{x=localExtract(text);how='keyword scan'}
-  const ch=applyExtract(x||{});clearCopyForNewBrief();renderInputs();changed();$('#exampleBadge').hidden=true;
+  const ch=applyExtract(x||{});S.setup={missing:(Array.isArray(x?.missing)?x.missing:[]).filter(m=>m&&m.question).slice(0,8).map(m=>({step:String(m.step||''),question:String(m.question),answer:''})),assumed:(Array.isArray(x?.assumed)?x.assumed:[]).map(String).slice(0,8),how,at:new Date().toLocaleDateString()};clearCopyForNewBrief();renderInputs();changed();$('#exampleBadge').hidden=true;
   setStatus('#extract-status',ch.length?`Filled from the doc (${how}): ${ch.join(', ')}. Review the sections below.`:'Nothing usable was found in the text. Fill the inputs by hand.',!ch.length);ok=ch.length>0;
   if(aiReady())draftCopy();else setStatus('#copy-status','The previous ad copy was cleared for this brief. Write new copy here.');
  }catch(e){
@@ -2819,6 +2850,47 @@ function renderIntl(R){const t=planOf(R),mm=mkts(),byM=Object.fromEntries(t.mark
 function intlAOA(R){const t=planOf(R);return [['INTERNATIONAL · '+TIERNAME[R.tier]],['Market','Stage','Weight','CAC multiplier','Order size multiplier','Acquisition spend','New retailers','New brands','Retailer iCAC','First-year GMV','Payback (months)'],
  ...t.markets.map(m=>[m.name,m.stage,m.weight,m.cac,m.aov,Math.round(m.spend),Math.round(m.retailers),Math.round(m.brands),Math.round(m.iCAC),Math.round(m.gmvY1),Math.round(m.payback)])]}
 
+
+/* ---------- Setup wizard: what the plan still needs, section by section ---------- */
+// Each step points at a section of the inputs pane (or a tab) and returns what is still missing ('' = done).
+function setupSteps(){const R=compute(UI.tier===3?1:UI.tier),sp=splitOf(),on=S.markets.filter(m=>m.on&&+m.weight>0),P=S.personas||{};
+ const sideHas=k=>R.lines.some(l=>l.side===k),C=S.copy||{},cIni=C.ini||[];
+ const inFlight=m=>m.month&&m.month>=String(S.start).slice(0,7)&&m.month<=String(S.end).slice(0,7);
+ const list=a=>a.filter(Boolean).join(', ');
+ return [
+  ['brief','d-brief','GTM brief',()=>list([!S.name&&'a plan name',!S.product&&'the product',!(S.brief||'').trim()&&'the GTM brief (upload or paste it)'])],
+  ['budget','d-budget','Budget & flight',()=>{const b=TIERS.map(t=>+S.budgets[t]||0);return list([b.some(x=>!(x>0))&&'a budget for Low, Medium and High',b[0]>b[1]||b[1]>b[2]?'Low ≤ Medium ≤ High':'',!(parseD(S.end)>parseD(S.start))&&'flight dates (end after start)'])}],
+  ['markets','d-mkt','Markets',()=>!on.length?'at least one market with a weight':Math.abs(sum(on.map(m=>+m.weight))-100)>1?'market weights add to '+Math.round(sum(on.map(m=>+m.weight)))+'%, not 100%':''],
+  ['audiences','d-aud','Audiences',()=>list([!(P.dm?.on&&P.dm.label)&&'a retailer (demand) audience',!(P.tech?.on&&P.tech.label)&&sp.brand>0&&'a brand (supply) audience',!(P.user?.on&&P.user.label)&&sp.winback>0&&'an existing / lapsed retailer audience for win-back'])],
+  ['initiatives','d-ini','Initiatives & pillars',()=>!S.initiatives.length?'the initiatives and their message pillars':S.initiatives.some(i=>!i.pillar)?'a message pillar for every initiative':sideHas('winback')&&!S.initiatives.some(i=>i.stage==='Conversion')?'a Conversion-stage initiative for the win-back lines':''],
+  ['moments','d-mom','Launch moments',()=>{if(!S.moments.length)return 'market weeks, trade shows, launches or seasons';const n=S.moments.filter(m=>!inFlight(m)).length;return n?n+' moment'+(n>1?'s fall':' falls')+' outside the flight':''}],
+  ['channels','d-ch','Channels',()=>{if(!CH.some(c=>S.channels[c.id]?.on))return 'the channels you will run';return list([!sideHas('retailer')&&'a retailer-acquisition channel',sp.brand>0&&!sideHas('brand')&&'a brand-acquisition channel (LinkedIn, Meta lead ads, search…)',sp.winback>0&&!sideHas('winback')&&'a win-back channel (Retargeting & CRM audiences)'])}],
+  ['volume','d-vol','Creative volume',()=>TIERS.some(t=>!(+S.concepts[t]>0)||!(+S.refresh[t]>0))?'concepts and refresh weeks for every version':''],
+  ['units','d-units','Creative units',()=>{const miss=CH.filter(c=>S.channels[c.id]?.on&&on.some(m=>eligible(c,m))&&!R.lines.some(l=>l.c.id===c.id)).map(c=>c.name);return miss.length?'ad units for '+miss.join(', '):''}],
+  ['copy','d-copy','Messaging & ad copy',()=>{const n=S.initiatives.filter((x,i)=>!(cIni[i]&&linesOf(cIni[i].h).length&&linesOf(cIni[i].b).length)).length;return list([n&&'headlines and body copy for '+n+' initiative'+(n>1?'s':''),!linesOf(C.ctas).length&&'CTAs'])}],
+  ['economics','tab:growth','Unit economics (Growth Plan)',()=>S.name!==EX_NAME&&!mp().retailer?'your own AOV, reorder and take rates (still on planning defaults)':'']
+ ].map(([id,card,label,f])=>({id,card,label,gap:f()}))}
+function wizardHtml(compact){const st=setupSteps(),done=st.filter(x=>!x.gap).length,next=st.find(x=>x.gap),su=S.setup||{},qs=(su.missing||[]).map((m,i)=>({...m,i})).filter(m=>!m.done);
+ const head=`<div class="wz-head"><b>${done} of ${st.length} ready</b><div class="wz-bar"><i style="width:${(done/st.length*100).toFixed(1)}%"></i></div></div>`;
+ const nextBox=next?`<div class="wz-next"><span class="wz-k">Next</span><b>${esc(next.label)}</b><span>Needs ${esc(next.gap)}.</span>${qs.filter(m=>m.step===next.id).slice(0,2).map(m=>`<span class="note">${esc(su.how||'The AI')} asks: ${esc(m.question)}</span>`).join('')}<button type="button" class="btn sm primary" data-wz-open="${next.card}">Open ${esc(next.label)}</button></div>`:'<div class="wz-next ok"><b>Every section has what it needs.</b></div>';
+ if(compact)return head+nextBox;
+ const lst=`<ol class="wz-list">${st.map(x=>`<li class="${x.gap?'':'ok'}"><button type="button" class="lnk" data-wz-open="${x.card}">${esc(x.label)}</button>${x.gap?`<span>${esc(x.gap)}</span>`:''}</li>`).join('')}</ol>`;
+ const ask=qs.length?`<div class="wz-qs"><b>Questions from ${esc(su.how||'the AI')}</b><p class="note">Answer what you can, then send. It re-reads the brief with your answers and refills the inputs.</p>${qs.map(m=>`<label class="f">${esc(m.question)}<input type="text" data-wz-q="${m.i}" value="${esc(m.answer||'')}"></label>`).join('')}<div class="btns"><button type="button" class="btn sm primary" id="btn-wz-send">Send answers</button><button type="button" class="lnk" id="btn-wz-clear">Dismiss questions</button></div></div>`:'';
+ const assumed=(su.assumed||[]).length?`<div class="wz-sub"><b>What ${esc(su.how||'the AI')} assumed</b><ul class="wz-as">${su.assumed.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`:'';
+ const from=su.at?`<p class="note">Filled from the brief by ${esc(su.how||'the AI')} on ${esc(su.at)}.</p>`:'';
+ return `<div class="wz-title">Setup checklist</div>`+head+from+nextBox+ask+assumed+lst}
+function renderWizard(){const w=$('#setup-wizard');if(!w)return;if(w.contains(document.activeElement)&&document.activeElement.dataset.wzQ!=null)return;w.innerHTML=wizardHtml(false)}
+function openStep(card){if(card.startsWith('tab:')){UI.tab=card.slice(4);if(UI.tier===3)UI.tier=1;save();renderOut();$('#view').scrollIntoView({behavior:'smooth',block:'start'});return}
+ const d=document.getElementById(card);if(!d)return;d.open=true;if(innerWidth<=980&&$('.rail'))$('.rail').scrollIntoView();d.scrollIntoView({behavior:'smooth',block:'start'});d.classList.remove('wz-flash');void d.offsetWidth;d.classList.add('wz-flash');
+ const f=d.querySelector('input:not([type=checkbox]):not([type=hidden]),textarea,select');if(f)setTimeout(()=>f.focus({preventScroll:true}),350)}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-wz-open]');if(b){e.preventDefault();openStep(b.dataset.wzOpen);return}
+ if(e.target.id==='btn-wz-send'){const a=(S.setup?.missing||[]).filter(m=>!m.done&&(m.answer||'').trim());if(!a.length)return setStatus('#extract-status','Answer at least one question first.',true);
+  if(typeof window.runExtractFor!=='function')return;window.runExtractFor(a.map(m=>'Q: '+m.question+'\nA: '+m.answer).join('\n\n'))}
+ if(e.target.id==='btn-wz-clear'){(S.setup?.missing||[]).forEach(m=>m.done=true);save();renderWizard()}});
+document.addEventListener('input',e=>{const i=e.target.dataset&&e.target.dataset.wzQ;if(i==null||!S.setup)return;S.setup.missing[+i].answer=e.target.value;save()});
+// the inputs pane changes without a re-render of the plan on some fields: refresh the checklist after any edit there
+document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('.rail')&&!e.target.closest('#setup-wizard'))setTimeout(renderWizard,150)});
+
 window.MP_TABS={mpmix:renderMix,winback:renderWinback,intl:renderIntl};
 window.MP_AOA={mpmix:mixAOA,winback:wbAOA,intl:intlAOA};
 window.MP_NAMES={mpmix:'Channel Incrementality',winback:'Win-back',intl:'International'};
@@ -2846,7 +2918,9 @@ function wireSplit(){const b=$('#sp-brand'),w=$('#sp-wb');if(!b)return;
  b.oninput=live;w.oninput=live;b.onchange=w.onchange=()=>{live();changed()};
  $('#sp-reset').onclick=()=>{S.split={...SPLIT_DEF};syncSplit();changed()};syncSplit()}
 if(!S.split)S.split={...SPLIT_DEF};
-const _renderOut=window.renderOut;window.renderOut=function(){_renderOut();syncSplit()};
+const _renderOut=window.renderOut;window.renderOut=function(){_renderOut();syncSplit();renderWizard();
+ // on the Summary, a compact "finish setting up" box until every section is ready (not on the example)
+ if(UI.tier!==3&&UI.tab==='summary'&&S.name!==EX_NAME&&setupSteps().some(x=>x.gap)){const p=$('#view .panel');if(p)p.insertAdjacentHTML('afterbegin',`<div class="wz-op">${'<h3 style="font-size:14px;margin:0">Finish setting up the plan</h3>'+wizardHtml(true)}</div>`)}};
 
 /* ---------- PDF export: every tab, landscape A4 ---------- */
 const LIBS=['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];

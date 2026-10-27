@@ -28,3 +28,27 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
 .li.mkt{grid-template-columns:auto minmax(72px,1fr) 46px 104px 38px auto}
 .li.mkt input[type=number],.li.ch input[type=number]{font-size:11px;padding-left:4px!important;padding-right:4px!important;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .mp-tip{cursor:help;border-bottom:1px dotted currentColor}
+/* Setup wizard (section 1 and the Summary) */
+.wz{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.wz:empty{display:none}
+.wz-title{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--rose)}
+.wz-head{display:flex;flex-direction:column;gap:6px}
+.wz-head b{font-size:13px}
+.wz-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.wz-bar i{display:block;height:100%;background:var(--rose);border-radius:99px}
+.wz-next{display:flex;flex-direction:column;gap:4px;align-items:flex-start;border:1px solid var(--rose-line);background:var(--rose-soft);border-radius:12px;padding:10px 12px;font-size:12.5px}
+.wz-next.ok{border-color:var(--line);background:none}
+.wz-next .wz-k{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--rose)}
+.wz-next .btn{margin-top:4px}
+.wz-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.wz-list li span{display:block;color:var(--muted);font-size:11.5px}
+.wz-list li.ok{color:var(--muted)}
+.wz-list li.ok::marker{content:"✓  ";color:var(--green)}
+.wz-qs{display:flex;flex-direction:column;gap:8px}
+.wz-sub b{font-size:12px;color:var(--muted)}
+.wz-as{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--muted)}
+.wz-op{display:flex;flex-direction:column;gap:10px;border:1px solid var(--rose-line);border-radius:12px;padding:14px 16px;max-width:520px}
+.rail details.wz-flash{animation:wzflash 1.6s ease-out}
+@keyframes wzflash{0%,30%{box-shadow:0 0 0 3px var(--rose)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.rail details.wz-flash{animation:none}}
+body.exporting .wz-op{display:none!important}
