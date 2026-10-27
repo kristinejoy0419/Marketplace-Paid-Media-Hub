@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Marketplace Paid Media Hub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Paid media planning for a two-sided wholesale marketplace: retailer and brand acquisition, GMV, incrementality, win-back and international mix.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Playfair+Display+SC:wght@400;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Two-sided wholesale marketplace · paid acquisition &amp; retention</div>
+      <h1>Marketplace Paid Media Hub</h1>
+      <p class="sub">Plan paid media for both sides of a wholesale marketplace: independent retailers who buy and brands who sell. Every dollar is judged on incremental customers, GMV and lifetime contribution, not platform-reported conversions.</p>
+    </div>
+    <span class="pill" id="example-pill">Example plan · illustrative numbers, not company data</span>
+  </header>
+
+  <section class="controls" aria-label="Plan controls">
+    <div class="ctl">
+      <span class="eyebrow">Annual budget</span>
+      <div class="seg" role="group" aria-label="Budget version" id="ver-seg"></div>
+    </div>
+    <div class="ctl">
+      <label class="eyebrow" for="supply">Brand (supply) share of acquisition</label>
+      <div class="slide"><input type="range" id="supply" min="5" max="40" step="1"><output id="supply-o"></output></div>
+      <span class="hint" id="supply-hint"></span>
+    </div>
+    <div class="ctl">
+      <label class="eyebrow" for="winback">Retargeting &amp; win-back share</label>
+      <div class="slide"><input type="range" id="winback" min="0" max="25" step="1"><output id="winback-o"></output></div>
+      <span class="hint" id="winback-hint"></span>
+    </div>
+    <div class="ctl btns">
+      <button class="btn" id="pdf" type="button">Download PDF</button>
+      <button class="btn ghost" id="copy-csv" type="button">Copy plan as CSV</button>
+      <button class="btn ghost" id="reset" type="button">Reset to example</button>
+    </div>
+  </section>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+
+  <nav class="tabs" role="tablist" id="tabs" aria-label="Sections"></nav>
+  <main id="view"></main>
+
+  <footer class="foot">All figures are an illustrative planning model. Replace the example inputs with real cohort, MMM and lift data before using a number in a decision. Inputs save in this browser only.</footer>
+</div>
+<script src="js/model.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

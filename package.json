@@ -1,0 +1,10 @@
+{
+  "name": "marketplace-paid-media-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Paid media planning hub for a two-sided wholesale marketplace",
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build-single.js"
+  }
+}

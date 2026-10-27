@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Marketplace Paid Media Hub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Paid media planning for a two-sided wholesale marketplace: retailer and brand acquisition, GMV, incrementality, win-back and international mix.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Playfair+Display+SC:wght@400;700&display=swap">
+<style>
+/* Layout: the Paid Media Hub look (rose-and-walnut hero band, section tabs), widened to a control bar plus
+   tabbed analysis views. Retailer (demand) work is marked in walnut, brand (supply) work in rose. */
+:root{
+  --bg:#fbf8f4; --surface:#ffffff; --sunk:#f3f0eb; --ink:#221e1b; --muted:#7d7469; --faint:#a89f93;
+  --line:#e7e2da; --accent:#5a3d2b; --accent-soft:#efe6dd;
+  --rose:#8c2f44; --rose-soft:#fbf3f4; --rose-line:#ecc5cb;
+  --green:#1b6a4a; --green-soft:#d9eee2; --flag:#a96607; --flag-soft:#fff9e6; --over:#c0262d; --over-soft:#fdecec;
+  --retailer:#5a3d2b; --brand:#8c2f44; --bar-muted:#d9d0c5;
+  --hero:linear-gradient(120deg,#f6e3e6 0%,#f8f1ea 55%,#efe6dd 100%); --hero-line:#ecd9d2; --hero-sub:#5f574e;
+  --h1:linear-gradient(90deg,#7a3652 0%,#3a1a28 55%,#121010 100%); --bar:linear-gradient(90deg,#8c2f44,#5a3d2b);
+  --f-display:"Playfair Display",Georgia,"Times New Roman",serif; --f-sc:"Playfair Display SC","Playfair Display",Georgia,serif;
+  --f-body:"Montserrat",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:16px; --shadow:0 1px 2px rgba(34,30,27,.05);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#120f0d; --surface:#1c1815; --sunk:#26211d; --ink:#f3f0eb; --muted:#b3a99c; --faint:#857b70;
+  --line:#332e29; --accent:#c9aa91; --accent-soft:#2e2219;
+  --rose:#dc9aa4; --rose-soft:#2c1419; --rose-line:#5f1f2f;
+  --green:#80c2a2; --green-soft:#0f2a20; --flag:#ffcd4d; --flag-soft:#3f2303; --over:#ff8a8a; --over-soft:#3d1214;
+  --retailer:#c9aa91; --brand:#dc9aa4; --bar-muted:#3d3631;
+  --hero:linear-gradient(120deg,#2a1519 0%,#1f1915 55%,#211a14 100%); --hero-line:#3b2a27; --hero-sub:#b3a99c;
+  --h1:linear-gradient(90deg,#e7a9b9 0%,#f0d9d0 60%,#f3f0eb 100%); --bar:linear-gradient(90deg,#dc9aa4,#c9aa91); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#120f0d; --surface:#1c1815; --sunk:#26211d; --ink:#f3f0eb; --muted:#b3a99c; --faint:#857b70;
+  --line:#332e29; --accent:#c9aa91; --accent-soft:#2e2219;
+  --rose:#dc9aa4; --rose-soft:#2c1419; --rose-line:#5f1f2f;
+  --green:#80c2a2; --green-soft:#0f2a20; --flag:#ffcd4d; --flag-soft:#3f2303; --over:#ff8a8a; --over-soft:#3d1214;
+  --retailer:#c9aa91; --brand:#dc9aa4; --bar-muted:#3d3631;
+  --hero:linear-gradient(120deg,#2a1519 0%,#1f1915 55%,#211a14 100%); --hero-line:#3b2a27; --hero-sub:#b3a99c;
+  --h1:linear-gradient(90deg,#e7a9b9 0%,#f0d9d0 60%,#f3f0eb 100%); --bar:linear-gradient(90deg,#dc9aa4,#c9aa91); color-scheme:dark}
+
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em;font-weight:600}
+h2{font-style:italic;font-size:clamp(19px,2.2vw,24px);line-height:1.2}
+h3{font-family:var(--f-sc);letter-spacing:.04em;font-weight:700;font-size:15px}
+p{margin:0}
+.wrap{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.note{color:var(--muted);font-size:12.5px;max-width:95ch}
+.hint{font-size:11.5px;color:var(--muted)}
+.foot{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+
+/* hero */
+header.top{position:relative;overflow:hidden;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;background:var(--hero);border:1px solid var(--hero-line);border-radius:24px;padding:26px 28px 26px}
+header.top::after{content:"";position:absolute;left:28px;right:28px;bottom:0;height:3px;background:var(--bar);border-radius:3px 3px 0 0}
+header.top .eyebrow{color:var(--rose)}
+header.top h1{font-family:var(--f-sc);font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:.015em;line-height:1.05;display:inline-block;margin-top:6px;
+  background-image:var(--h1);-webkit-background-clip:text;background-clip:text;color:var(--rose);-webkit-text-fill-color:transparent}
+header.top .sub{color:var(--hero-sub);max-width:72ch;font-size:13.5px;margin-top:8px}
+.pill{align-self:flex-start;font-size:11px;font-weight:600;border:1px solid var(--rose-line);background:var(--surface);color:var(--rose);border-radius:999px;padding:6px 12px}
+
+/* controls */
+.controls{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;grid-template-rows:auto auto auto;gap:6px 28px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow)}
+/* each control spans the same three rows (label, control, hint) so labels, sliders and hints line up across columns */
+.ctl{display:grid;grid-row:span 3;grid-template-rows:subgrid;min-width:0}
+.ctl>.eyebrow{align-self:end}
+.ctl>.seg,.ctl>.slide{align-self:center}
+.ctl.btns{display:flex;flex-direction:column;gap:8px;align-self:center}
+.ctl.btns .btn{width:100%}
+@media (max-width:900px){
+  .controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:none;gap:6px 24px}
+  .ctl:first-child,.ctl.btns{grid-column:1/-1}
+  .ctl:first-child{margin-bottom:10px}
+  .ctl.btns{flex-direction:row;flex-wrap:wrap;margin-top:10px}
+  .ctl.btns .btn{width:auto}
+}
+@media (max-width:560px){.controls{grid-template-columns:minmax(0,1fr)}.ctl{margin-bottom:10px}}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--muted);background:var(--surface);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg button:hover:not([aria-pressed="true"]){border-color:var(--rose-line);color:var(--ink)}
+.slide{display:flex;align-items:center;gap:10px}
+.slide input{flex:1 1 auto;min-width:0;accent-color:var(--rose)}
+.slide output{font-weight:700;font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right}
+.btn{font:inherit;font-size:12px;font-weight:600;border-radius:999px;padding:7px 14px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--rose-line)}
+.btn.sm{padding:5px 11px;font-size:11.5px}
+button:focus-visible,input:focus-visible,select:focus-visible,[role="tab"]:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+.status{font-size:12px;color:var(--green);min-height:1em}
+
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line)}
+.tabs a{padding:12px 10px;font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;text-decoration:none}
+.tabs a[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tabs a:hover{color:var(--ink)}
+main{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:22px 24px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px}
+.grid2.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:1050px){.grid2,.grid2.even{grid-template-columns:minmax(0,1fr)}}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+
+/* KPI tiles */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+@media (max-width:900px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .v{font-family:var(--f-display);font-size:clamp(20px,2.4vw,27px);font-weight:600;font-variant-numeric:tabular-nums}
+.tile .k{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tile .d{font-size:11.5px;color:var(--muted)}
+.tile.retailer{box-shadow:inset 3px 0 0 var(--retailer)}
+.tile.brand{box-shadow:inset 3px 0 0 var(--brand)}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:6px;padding:2px 6px;border:1px solid transparent;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.good,.chip.measured{background:var(--green-soft);color:var(--green)}
+.chip.warn,.chip.model{background:var(--flag-soft);color:var(--flag)}
+.chip.bad{background:var(--over-soft);color:var(--over)}
+.chip.retailer{background:var(--accent-soft);color:var(--retailer)}
+.chip.brand{background:var(--rose-soft);color:var(--brand);border-color:var(--rose-line)}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{background:var(--sunk);font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+td{font-variant-numeric:tabular-nums}
+td.r,th.r{text-align:right}
+td small{display:block;color:var(--muted);font-size:11px}
+tr:last-child td{border-bottom:0}
+tr.tot td{font-weight:700;border-top:2px solid var(--ink)}
+tr.grp td{background:var(--sunk);font-family:var(--f-sc);font-weight:700;letter-spacing:.04em}
+td input,.field input{width:76px;font:inherit;font-weight:600;text-align:right;padding:5px 7px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+td input.w{width:96px}
+td select{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
+td input:focus,.field input:focus{border-color:var(--rose);outline:2px solid var(--rose-line);outline-offset:1px}
+.up{color:var(--green)}.dn{color:var(--over)}
+
+/* assumption fields */
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 18px}
+.field{display:flex;align-items:center;gap:8px;font-size:12.5px;justify-content:space-between;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.field label{flex:1 1 auto;min-width:0}
+.field .u{color:var(--muted);font-size:11px;width:16px}
+
+/* charts */
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-body);font-size:11px}
+.chart text.lbl{fill:var(--ink);font-weight:500}
+.chart .spend{fill:var(--bar-muted)}
+.chart .val-retailer{fill:var(--retailer)}
+.chart .val-brand{fill:var(--brand)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11.5px;color:var(--muted);align-items:center}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.sw.spend{background:var(--bar-muted)}.sw.retailer{background:var(--retailer)}.sw.brand{background:var(--brand)}
+
+/* balance meter */
+.meter{position:relative;height:30px;margin:22px 0 4px}
+.meter .track{position:absolute;inset:12px 0 auto;height:6px;border-radius:6px;background:var(--sunk);border:1px solid var(--line)}
+.meter .band{position:absolute;top:10px;height:10px;border-radius:6px;background:var(--green-soft);border:1px solid var(--green)}
+.meter .mark{position:absolute;top:2px;width:3px;height:26px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+.meter .mark span{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;white-space:nowrap}
+.meter .ends{position:absolute;inset:auto 0 -16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted)}
+
+/* callouts */
+.callouts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:700px){.callouts{grid-template-columns:minmax(0,1fr)}}
+.callout{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--sunk);display:flex;flex-direction:column;gap:4px;min-width:0}
+.callout b{font-weight:600}
+.callout .chip{align-self:flex-start}
+.headline{font-family:var(--f-display);font-size:clamp(17px,1.9vw,21px);line-height:1.35;max-width:80ch}
+.funnel{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+@media (max-width:800px){.funnel{grid-template-columns:minmax(0,1fr)}}
+.funnel div{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.funnel .v{font-family:var(--f-display);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.funnel .k{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;max-width:95ch}
+
+/* PDF export: freeze the light look and hide the controls that do nothing on paper */
+body.exporting .ctl.btns,body.exporting .status,body.exporting [data-act]{visibility:hidden}
+body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColor;color:var(--rose)}
+body.exporting .slide input{display:none}
+body.exporting .slide output{text-align:left;font-size:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Two-sided wholesale marketplace · paid acquisition &amp; retention</div>
+      <h1>Marketplace Paid Media Hub</h1>
+      <p class="sub">Plan paid media for both sides of a wholesale marketplace: independent retailers who buy and brands who sell. Every dollar is judged on incremental customers, GMV and lifetime contribution, not platform-reported conversions.</p>
+    </div>
+    <span class="pill" id="example-pill">Example plan · illustrative numbers, not company data</span>
+  </header>
+
+  <section class="controls" aria-label="Plan controls">
+    <div class="ctl">
+      <span class="eyebrow">Annual budget</span>
+      <div class="seg" role="group" aria-label="Budget version" id="ver-seg"></div>
+    </div>
+    <div class="ctl">
+      <label class="eyebrow" for="supply">Brand (supply) share of acquisition</label>
+      <div class="slide"><input type="range" id="supply" min="5" max="40" step="1"><output id="supply-o"></output></div>
+      <span class="hint" id="supply-hint"></span>
+    </div>
+    <div class="ctl">
+      <label class="eyebrow" for="winback">Retargeting &amp; win-back share</label>
+      <div class="slide"><input type="range" id="winback" min="0" max="25" step="1"><output id="winback-o"></output></div>
+      <span class="hint" id="winback-hint"></span>
+    </div>
+    <div class="ctl btns">
+      <button class="btn" id="pdf" type="button">Download PDF</button>
+      <button class="btn ghost" id="copy-csv" type="button">Copy plan as CSV</button>
+      <button class="btn ghost" id="reset" type="button">Reset to example</button>
+    </div>
+  </section>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+
+  <nav class="tabs" role="tablist" id="tabs" aria-label="Sections"></nav>
+  <main id="view"></main>
+
+  <footer class="foot">All figures are an illustrative planning model. Replace the example inputs with real cohort, MMM and lift data before using a number in a decision. Inputs save in this browser only.</footer>
+</div>
+<script>
+/* Marketplace Paid Media Hub: the planning model.
+   Pure functions only, no DOM. Runs in the browser (window.HubModel) and in Node (require) for tests.
+   Every default is an illustrative planning assumption, not Faire data. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.HubModel = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  // ---------- defaults ----------
+  // Channel fields: mix = share of that side's acquisition budget; baseCAC = platform-attributed cost per new
+  // customer at refSpend; elasticity = how fast CAC rises with spend (CAC ∝ spend^e); mmm / lift = incrementality
+  // reads (share of platform-attributed customers that are truly incremental). Lift wins over MMM when present.
+  const DEFAULTS = {
+    version: 'medium',
+    budgets: { low: 20e6, medium: 50e6, high: 100e6 },
+    supplyShare: 0.2,   // share of acquisition budget spent recruiting brands (supply side)
+    winbackShare: 0.08, // share of total budget held for retargeting and win-back
+    channels: [
+      { id: 'search_nb', side: 'retailer', name: 'Google Search, non-brand', note: '"wholesale candles", "gift shop suppliers"', mix: 0.22, baseCAC: 170, refSpend: 8e6, elasticity: 0.45, mmm: 0.72, lift: 0.75, liftSrc: 'Geo holdout, Q2' },
+      { id: 'search_brand', side: 'retailer', name: 'Google Search, brand', note: 'Defensive brand terms', mix: 0.05, baseCAC: 60, refSpend: 2e6, elasticity: 0.3, mmm: 0.3, lift: 0.2, liftSrc: 'Brand search holdout' },
+      { id: 'pmax', side: 'retailer', name: 'Performance Max & Shopping', note: 'Product feed of top-selling wholesale SKUs', mix: 0.12, baseCAC: 180, refSpend: 4e6, elasticity: 0.4, mmm: 0.55, lift: null, liftSrc: '' },
+      { id: 'meta', side: 'retailer', name: 'Meta prospecting', note: 'Advantage+, boutique and gift-shop owner signals', mix: 0.28, baseCAC: 210, refSpend: 10e6, elasticity: 0.35, mmm: 0.6, lift: 0.65, liftSrc: 'Conversion Lift, Q3' },
+      { id: 'tiktok', side: 'retailer', name: 'TikTok', note: 'Shop-owner creators, "what I stock" content', mix: 0.08, baseCAC: 240, refSpend: 3e6, elasticity: 0.5, mmm: 0.6, lift: null, liftSrc: '' },
+      { id: 'pinterest', side: 'retailer', name: 'Pinterest', note: 'Seasonal merchandising boards', mix: 0.07, baseCAC: 230, refSpend: 2.5e6, elasticity: 0.5, mmm: 0.55, lift: null, liftSrc: '' },
+      { id: 'ctv', side: 'retailer', name: 'YouTube & CTV', note: 'Upper funnel, geo-testable', mix: 0.08, baseCAC: 380, refSpend: 3e6, elasticity: 0.3, mmm: 0.8, lift: null, liftSrc: '' },
+      { id: 'partners', side: 'retailer', name: 'Affiliates & POS partners', note: 'Point-of-sale and e-commerce platform partners', mix: 0.1, baseCAC: 150, refSpend: 3.5e6, elasticity: 0.6, mmm: 0.45, lift: 0.5, liftSrc: 'Partner holdout' },
+      { id: 'meta_b', side: 'brand', name: 'Meta, maker audiences', note: 'Independent makers and DTC founders', mix: 0.4, baseCAC: 650, refSpend: 3.5e6, elasticity: 0.4, mmm: 0.6, lift: 0.6, liftSrc: 'Conversion Lift, Q3' },
+      { id: 'search_b', side: 'brand', name: 'Google Search, "sell wholesale"', note: 'High intent supply terms', mix: 0.25, baseCAC: 520, refSpend: 2.2e6, elasticity: 0.5, mmm: 0.7, lift: null, liftSrc: '' },
+      { id: 'linkedin_b', side: 'brand', name: 'LinkedIn, brand founders', note: 'Founders, heads of sales at emerging brands', mix: 0.1, baseCAC: 1100, refSpend: 1e6, elasticity: 0.4, mmm: 0.7, lift: null, liftSrc: '' },
+      { id: 'creators_b', side: 'brand', name: 'Creator & community partners', note: 'Maker communities, small-business educators', mix: 0.15, baseCAC: 800, refSpend: 1.3e6, elasticity: 0.5, mmm: 0.6, lift: null, liftSrc: '' },
+      { id: 'pod_b', side: 'brand', name: 'Podcasts & newsletters', note: 'Small-business and maker shows', mix: 0.1, baseCAC: 900, refSpend: 1e6, elasticity: 0.4, mmm: 0.75, lift: null, liftSrc: '' }
+    ],
+    // Retailer (demand side) unit economics
+    retailer: {
+      firstAOV: 700, repeatAOV: 550,
+      reorder12: 0.65,     // share of new retailers who reorder within 12 months
+      repeatOrders: 5,     // repeat orders in year 1 among those who reorder
+      retention: 0.75,     // yearly retention of active retailers after year 1
+      growth: 1.15,        // order growth per retained retailer per year
+      takeFirst: 0.25, takeRepeat: 0.15,
+      margin: 0.7,         // contribution margin on net revenue (after payments, returns, credit losses)
+      years: 3
+    },
+    // Brand (supply side) unit economics
+    brand: {
+      gmvY1: 12000,        // marketplace GMV per newly activated brand, year 1
+      incrShare: 0.4,      // share of that GMV that is net new to the marketplace, not shifted from other brands
+      take: 0.18, retention: 0.8, growth: 1.2,
+      referredRetailers: 0.8, // retailers each brand brings onto the marketplace from its own book
+      referredValue: 0.5      // share of a referred retailer's LTV credited to brand acquisition
+    },
+    network: { activeBrands: 100000, effect: 0.5 }, // more supply makes retailer acquisition cheaper
+    balance: { min: 8, max: 20 },                   // healthy band: new retailers per new brand
+    markets: [
+      { id: 'us', name: 'United States', weight: 0.62, cac: 1.0, aov: 1.0, stage: 'Core', note: 'Full channel mix, MMM fully calibrated' },
+      { id: 'ca', name: 'Canada', weight: 0.08, cac: 1.1, aov: 0.95, stage: 'Scaling', note: 'Bilingual creative in Quebec' },
+      { id: 'uk', name: 'United Kingdom', weight: 0.12, cac: 1.15, aov: 0.9, stage: 'Scaling', note: 'GBP pricing, local trade-show calendar' },
+      { id: 'eu', name: 'Europe (DE, FR, NL, ES, IT…)', weight: 0.13, cac: 1.3, aov: 0.85, stage: 'Scaling', note: 'Localized creative per language, VAT messaging' },
+      { id: 'au', name: 'Australia & NZ', weight: 0.05, cac: 1.2, aov: 0.95, stage: 'Test', note: 'Southern-hemisphere seasonality, geo holdout first' }
+    ],
+    // Win-back and retargeting: paid media against people who already know the marketplace
+    winback: [
+      { id: 'no_first', name: 'Signed up, no first order', side: 'retailer', size: 250000, reach: 0.7, costPerReach: 12, exposed: 0.09, holdout: 0.06, gmv: 2500, take: 0.22, share: 0.3 },
+      { id: 'no_reorder', name: 'First order, no reorder in 60 days', side: 'retailer', size: 200000, reach: 0.75, costPerReach: 10, exposed: 0.22, holdout: 0.16, gmv: 2200, take: 0.15, share: 0.3 },
+      { id: 'lapsed', name: 'Lapsed 180+ days', side: 'retailer', size: 180000, reach: 0.6, costPerReach: 14, exposed: 0.12, holdout: 0.08, gmv: 1800, take: 0.15, share: 0.2 },
+      { id: 'cart', name: 'Abandoned cart, dynamic product ads', side: 'retailer', size: 80000, reach: 0.85, costPerReach: 6, exposed: 0.3, holdout: 0.24, gmv: 900, take: 0.2, share: 0.15 },
+      { id: 'dormant_brands', name: 'Dormant brands, no orders in 90 days', side: 'brand', size: 20000, reach: 0.6, costPerReach: 20, exposed: 0.15, holdout: 0.1, gmv: 6000, take: 0.18, share: 0.05 }
+    ]
+  };
+
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const sum = (a, f = x => x) => a.reduce((s, x) => s + f(x), 0);
+
+  // ---------- unit economics ----------
+  // Retailer lifetime value: contribution from net revenue over the horizon.
+  function retailerLTV(r) {
+    const repeatGMV = r.reorder12 * r.repeatOrders * r.repeatAOV;
+    const gmvY1 = r.firstAOV + repeatGMV;
+    const netY1 = r.firstAOV * r.takeFirst + repeatGMV * r.takeRepeat;
+    const years = [{ gmv: gmvY1, net: netY1 }];
+    let g = repeatGMV;
+    for (let y = 2; y <= r.years; y++) { g *= r.retention * r.growth; years.push({ gmv: g, net: g * r.takeRepeat }); }
+    const contrib = years.map(y => y.net * r.margin);
+    return { gmvY1, netY1, contribY1: contrib[0], ltv: sum(contrib), gmvLife: sum(years, y => y.gmv), years };
+  }
+
+  function brandLTV(b, r, retailerLtv) {
+    const years = [];
+    let g = b.gmvY1;
+    for (let y = 1; y <= r.years; y++) { years.push(g); g *= b.retention * b.growth; }
+    const contrib = years.map(x => x * b.incrShare * b.take * r.margin);
+    const referred = b.referredRetailers * b.referredValue * retailerLtv;
+    return { gmvY1: b.gmvY1, contribY1: contrib[0] + referred / r.years, ltv: sum(contrib) + referred, gmvLife: sum(years), referred };
+  }
+
+  // ---------- channel response ----------
+  // CAC rises with spend: CAC(s) = base × (s / ref)^e. Incremental customers = s / CAC × incrementality.
+  const incrOf = c => (c.lift != null ? c.lift : c.mmm);
+  function channelAt(c, spend, cacMult) {
+    if (spend <= 0) return { spend: 0, cac: c.baseCAC * cacMult, attributed: 0, incremental: 0, iCAC: Infinity, marginal: 0 };
+    const cac = c.baseCAC * cacMult * Math.pow(spend / c.refSpend, c.elasticity);
+    const attributed = spend / cac, incr = incrOf(c), incremental = attributed * incr;
+    const iCAC = cac / incr;
+    return { spend, cac, attributed, incremental, iCAC, marginal: iCAC / (1 - c.elasticity) };
+  }
+
+  // ---------- win-back response ----------
+  // Reach saturates: reached = pool × (1 − e^(−spend / (pool × costPerReach))). Lift = exposed − holdout.
+  function winbackAt(s, spend) {
+    const pool = s.size * s.reach;
+    const reached = spend > 0 ? pool * (1 - Math.exp(-spend / (pool * s.costPerReach))) : 0;
+    const incr = reached * Math.max(s.exposed - s.holdout, 0);
+    const gmv = incr * s.gmv, net = gmv * s.take;
+    return { spend, reached, incr, gmv, net, costPerIncr: incr ? spend / incr : Infinity, iROAS: spend ? gmv / spend : 0, netROAS: spend ? net / spend : 0 };
+  }
+
+  // ---------- the plan ----------
+  function plan(input, overrides) {
+    const p = Object.assign(clone(input), overrides || {});
+    const total = p.budgets[p.version];
+    const winbackBudget = total * p.winbackShare;
+    const acq = total - winbackBudget;
+    const sideBudget = { brand: acq * p.supplyShare, retailer: acq * (1 - p.supplyShare) };
+
+    // Market mix scales CAC: a dollar in a pricier market buys fewer customers.
+    const mW = sum(p.markets, m => m.weight) || 1;
+    const marketCAC = sum(p.markets, m => m.weight * m.cac) / mW;
+
+    const side = s => p.channels.filter(c => c.side === s);
+    const runSide = (s, mult) => {
+      const ch = side(s), mixT = sum(ch, c => c.mix) || 1;
+      return ch.map(c => Object.assign({ id: c.id, side: s, name: c.name, incrFactor: incrOf(c), evidence: c.lift != null ? 'measured' : 'model' }, channelAt(c, sideBudget[s] * c.mix / mixT, mult)));
+    };
+
+    const brandRows = runSide('brand', marketCAC);
+    const newBrands = sum(brandRows, r => r.incremental);
+    // Network effect: new supply relative to the active base makes retailer acquisition cheaper.
+    const netMult = Math.pow(1 + newBrands / p.network.activeBrands, -p.network.effect);
+    const retailerRows = runSide('retailer', marketCAC * netMult);
+    const newRetailers = sum(retailerRows, r => r.incremental);
+    const referredRetailers = newBrands * p.brand.referredRetailers;
+
+    const R = retailerLTV(p.retailer), B = brandLTV(p.brand, p.retailer, R.ltv);
+    const ltvOf = s => (s === 'retailer' ? R.ltv : B.ltv);
+    const rows = retailerRows.concat(brandRows).map(r => Object.assign(r, {
+      ltv: ltvOf(r.side), value: r.incremental * ltvOf(r.side), ltvCac: r.iCAC === Infinity ? 0 : ltvOf(r.side) / r.iCAC
+    }));
+
+    const wb = p.winback.map(s => Object.assign({ id: s.id, name: s.name, side: s.side }, winbackAt(s, winbackBudget * s.share / (sum(p.winback, x => x.share) || 1))));
+
+    const rSpend = sideBudget.retailer, bSpend = sideBudget.brand;
+    const rICAC = newRetailers ? rSpend / newRetailers : Infinity, bICAC = newBrands ? bSpend / newBrands : Infinity;
+    const ratio = newBrands ? newRetailers / newBrands : Infinity;
+    const wbGMV = sum(wb, w => w.gmv), wbNet = sum(wb, w => w.net);
+    const gmvY1 = newRetailers * R.gmvY1 + newBrands * p.brand.gmvY1 * p.brand.incrShare + referredRetailers * R.gmvY1 + wbGMV;
+    const value = sum(rows, r => r.value) + wbNet * p.retailer.margin;
+
+    // Markets: split customers by weight ÷ CAC multiplier; GMV follows each market's order size.
+    const mDen = sum(p.markets, m => m.weight / m.cac) || 1;
+    const markets = p.markets.map(m => {
+      const share = (m.weight / m.cac) / mDen;
+      const ret = newRetailers * share, br = newBrands * share, spend = acq * m.weight / mW;
+      const gmv = ret * R.gmvY1 * m.aov + br * p.brand.gmvY1 * p.brand.incrShare * m.aov;
+      return Object.assign({}, m, { spend, retailers: ret, brands: br, iCAC: ret ? (spend * (1 - p.supplyShare)) / ret : Infinity, gmvY1: gmv,
+        payback: ret ? ((spend * (1 - p.supplyShare)) / ret) / (R.contribY1 * m.aov / 12) : Infinity });
+    });
+
+    return {
+      p, total, acq, winbackBudget, sideBudget, marketCAC, netMult,
+      R, B, rows, wb, markets,
+      kpi: {
+        newRetailers, newBrands, referredRetailers, rICAC, bICAC, ratio,
+        balance: ratio < p.balance.min ? 'supply-heavy' : ratio > p.balance.max ? 'demand-heavy' : 'balanced',
+        rLtvCac: R.ltv / rICAC, bLtvCac: B.ltv / bICAC,
+        rPayback: rICAC / (R.contribY1 / 12), bPayback: bICAC / (B.contribY1 / 12),
+        gmvY1, gmvPerDollar: gmvY1 / total, value, roi: value / total,
+        wbGMV, wbNet, wbIncr: sum(wb, w => w.incr)
+      }
+    };
+  }
+
+  // ---------- optimizers ----------
+  // Within one side, hand out the budget in small steps to whichever channel has the lowest marginal
+  // incremental CAC. The result equalizes marginal returns, the rule an MMM-led budget review follows.
+  function optimizeMix(input, sideName, steps) {
+    const p = clone(input), n = steps || 400;
+    const t = plan(p), budget = t.sideBudget[sideName];
+    const mult = sideName === 'retailer' ? t.marketCAC * t.netMult : t.marketCAC;
+    const ch = p.channels.filter(c => c.side === sideName);
+    const alloc = ch.map(() => 0), step = budget / n;
+    for (let i = 0; i < n; i++) {
+      let best = 0, bestM = Infinity;
+      ch.forEach((c, j) => {
+        if (alloc[j] + step > c.refSpend * 3) return; // cap at 3× the reference spend: beyond it the curve is a guess
+        const m = alloc[j] === 0 ? 0 : channelAt(c, alloc[j], mult).marginal;
+        if (m < bestM) { bestM = m; best = j; }
+      });
+      alloc[best] += step;
+    }
+    ch.forEach((c, j) => { c.mix = alloc[j] / budget; });
+    return p;
+  }
+
+  // Scan the supply share for the split that returns the most lifetime contribution.
+  function bestSupplyShare(input) {
+    let best = { share: input.supplyShare, value: -Infinity };
+    for (let s = 0.05; s <= 0.4001; s += 0.01) {
+      const v = plan(input, { supplyShare: +s.toFixed(2) }).kpi.value;
+      if (v > best.value) best = { share: +s.toFixed(2), value: v };
+    }
+    return best;
+  }
+
+  // The cheapest place for the next $1M on each side.
+  function nextDollar(t) {
+    const pick = s => t.rows.filter(r => r.side === s && r.spend > 0).sort((a, b) => a.marginal / a.ltv - b.marginal / b.ltv)[0];
+    return { retailer: pick('retailer'), brand: pick('brand') };
+  }
+
+  return { DEFAULTS, clone, retailerLTV, brandLTV, channelAt, winbackAt, incrOf, plan, optimizeMix, bestSupplyShare, nextDollar };
+});
+</script>
+<script>
+/* Marketplace Paid Media Hub: the page. Reads and writes plan inputs, asks HubModel for the numbers, draws the tabs. */
+(function () {
+  'use strict';
+  const M = window.HubModel;
+  const KEY = 'marketplace-hub-v1';
+  const $ = id => document.getElementById(id);
+
+  // ---------- state ----------
+  let S = load();
+  function load() {
+    try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.channels) return s; } catch (e) { /* storage blocked or empty */ }
+    return M.clone(M.DEFAULTS);
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* not saved; page still works */ } }
+  const getPath = (o, path) => path.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
+  function setPath(o, path, val) { const ks = path.split('.'), last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = val; }
+
+  // ---------- formatting ----------
+  const fin = n => Number.isFinite(n);
+  const money = n => !fin(n) ? '—' : Math.abs(n) >= 1e9 ? '$' + (n / 1e9).toFixed(2) + 'B' : Math.abs(n) >= 1e6 ? '$' + (n / 1e6).toFixed(n >= 1e8 ? 0 : 1) + 'M' : Math.abs(n) >= 1e4 ? '$' + Math.round(n / 1e3) + 'K' : '$' + Math.round(n).toLocaleString('en-US');
+  const usd = n => !fin(n) ? '—' : '$' + Math.round(n).toLocaleString('en-US');
+  const int = n => !fin(n) ? '—' : Math.round(n).toLocaleString('en-US');
+  const pct = (n, d = 0) => !fin(n) ? '—' : (n * 100).toFixed(d) + '%';
+  const x = (n, d = 1) => !fin(n) ? '—' : n.toFixed(d) + '×';
+  const mo = n => !fin(n) ? '—' : n.toFixed(1) + ' mo';
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // An editable number bound to a path in S. scale 100 shows a share as a percent.
+  function inp(path, opts) {
+    const o = Object.assign({ scale: 1, dp: 0, cls: '' }, opts || {});
+    const raw = getPath(S, path);
+    const shown = raw == null ? '' : +(raw * o.scale).toFixed(o.dp + 2);
+    return `<input type="text" inputmode="decimal" id="in-${path.replace(/\./g, '-')}" data-path="${path}" data-scale="${o.scale}"${o.blank ? ' data-blank="1"' : ''} value="${shown}" class="${o.cls}" aria-label="${esc(o.label || path)}" placeholder="${o.blank ? '—' : ''}">`;
+  }
+  const field = (label, path, unit, opts) => `<div class="field"><label for="in-${path.replace(/\./g, '-')}">${label}</label>${inp(path, Object.assign({ label }, opts))}<span class="u">${unit || ''}</span></div>`;
+  const ltvChip = r => r >= 3 ? 'good' : r >= 1.5 ? 'warn' : 'bad';
+  const payChip = m => m <= 12 ? 'good' : m <= 24 ? 'warn' : 'bad';
+  const sideChip = s => `<span class="chip ${s}">${s === 'retailer' ? 'Retailer' : 'Brand'}</span>`;
+
+  // ---------- tabs ----------
+  const TABS = [
+    ['summary', 'Summary'], ['channels', 'Channel mix'], ['winback', 'Retargeting & win-back'],
+    ['measurement', 'Measurement'], ['international', 'International'], ['economics', 'Unit economics']
+  ];
+  const tabFromHash = () => { const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : 'summary'; };
+  let tab = tabFromHash();
+
+  // ---------- views ----------
+  const V = {};
+
+  V.summary = t => {
+    const k = t.kpi, nd = M.nextDollar(t), best = M.bestSupplyShare(S);
+    const balTxt = k.balance === 'balanced' ? 'inside the healthy band' : k.balance === 'supply-heavy' ? 'below the band: more brands than new retailers can absorb' : 'above the band: retailers will outrun the catalog';
+    const lead = `At ${money(t.total)}, the plan adds <b>${int(k.newRetailers)}</b> incremental retailers and <b>${int(k.newBrands)}</b> brands, for <b>${money(k.gmvY1)}</b> of first-year GMV. That is ${x(k.gmvPerDollar)} GMV per media dollar, with retailers paying back in ${mo(k.rPayback)}.`;
+    return `
+    <section class="panel">
+      <span class="eyebrow">${esc(S.version[0].toUpperCase() + S.version.slice(1))} plan · ${money(t.total)} a year</span>
+      <p class="headline">${lead}</p>
+      <div class="tiles">
+        <div class="tile retailer"><span class="v">${int(k.newRetailers)}</span><span class="k">Incremental new retailers</span><span class="d">+${int(k.referredRetailers)} brought by new brands</span></div>
+        <div class="tile retailer"><span class="v">${usd(k.rICAC)}</span><span class="k">Retailer incremental CAC</span><span class="d">LTV:CAC <span class="chip ${ltvChip(k.rLtvCac)}">${x(k.rLtvCac)}</span></span></div>
+        <div class="tile retailer"><span class="v">${mo(k.rPayback)}</span><span class="k">Retailer payback</span><span class="d"><span class="chip ${payChip(k.rPayback)}">${k.rPayback <= 12 ? 'Under 12 months' : 'Over 12 months'}</span></span></div>
+        <div class="tile"><span class="v">${money(k.gmvY1)}</span><span class="k">First-year GMV</span><span class="d">${x(k.gmvPerDollar)} per media dollar</span></div>
+        <div class="tile brand"><span class="v">${int(k.newBrands)}</span><span class="k">Incremental new brands</span><span class="d">${pct(S.supplyShare)} of acquisition spend</span></div>
+        <div class="tile brand"><span class="v">${usd(k.bICAC)}</span><span class="k">Brand incremental CAC</span><span class="d">LTV:CAC <span class="chip ${ltvChip(k.bLtvCac)}">${x(k.bLtvCac)}</span></span></div>
+        <div class="tile"><span class="v">${money(k.wbGMV)}</span><span class="k">Win-back incremental GMV</span><span class="d">${int(k.wbIncr)} reactivations over holdout</span></div>
+        <div class="tile"><span class="v">${x(k.roi, 2)}</span><span class="k">${S.retailer.years}-year contribution per $</span><span class="d">${money(k.value)} contribution</span></div>
+      </div>
+    </section>
+    <div class="grid2">
+      <section class="panel">
+        <span class="eyebrow">Spend vs ${S.retailer.years}-year contribution by channel</span>
+        <h3>Where the money works hardest</h3>
+        <div class="legend"><span><i class="sw spend"></i>Spend</span><span><i class="sw retailer"></i>Retailer contribution</span><span><i class="sw brand"></i>Brand contribution</span></div>
+        ${chart(t)}
+        <p class="note">Contribution counts only incremental customers (after MMM or lift calibration) times lifetime contribution. A bar shorter than its spend bar loses money over the horizon.</p>
+      </section>
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <section class="panel">
+          <span class="eyebrow">Marketplace balance</span>
+          <h3>New retailers per new brand: ${fin(k.ratio) ? k.ratio.toFixed(1) : '—'}</h3>
+          ${meter(k.ratio, S.balance)}
+          <p class="note">The ratio is ${balTxt}. The band (${S.balance.min} to ${S.balance.max}) is set on Unit economics. Each new brand also brings ${S.brand.referredRetailers} retailers from its own book and makes retailer acquisition ${pct(1 - t.netMult, 1)} cheaper through catalog depth.</p>
+          <div class="row"><span class="hint">Best brand share at these assumptions: <b>${pct(best.share)}</b></span>${Math.abs(best.share - S.supplyShare) > 0.005 ? `<button class="btn sm" type="button" data-act="best-share">Use ${pct(best.share)}</button>` : '<span class="chip good">Already there</span>'}</div>
+        </section>
+        <section class="panel">
+          <span class="eyebrow">Where the next $1M goes</span>
+          <div class="callouts">
+            ${nd.retailer ? `<div class="callout">${sideChip('retailer')}<b>${esc(nd.retailer.name)}</b><span class="hint">Marginal incremental CAC ${usd(nd.retailer.marginal)} against ${usd(nd.retailer.ltv)} LTV</span></div>` : ''}
+            ${nd.brand ? `<div class="callout">${sideChip('brand')}<b>${esc(nd.brand.name)}</b><span class="hint">Marginal incremental CAC ${usd(nd.brand.marginal)} against ${usd(nd.brand.ltv)} LTV</span></div>` : ''}
+          </div>
+          <p class="note">Ranked by the cost of the next incremental customer, not the average one. Rebalance each side on Channel mix.</p>
+        </section>
+      </div>
+    </div>
+    <section class="panel">
+      <span class="eyebrow">Retailer cohort from this plan</span>
+      <h3>From spend to repeat GMV</h3>
+      <div class="funnel">
+        <div><span class="v">${money(t.sideBudget.retailer)}</span><span class="k">Retailer acquisition spend</span></div>
+        <div><span class="v">${int(t.rows.filter(r => r.side === 'retailer').reduce((a, r) => a + r.attributed, 0))}</span><span class="k">Platform-attributed first orders</span></div>
+        <div><span class="v">${int(k.newRetailers)}</span><span class="k">Incremental first orders</span></div>
+        <div><span class="v">${int(k.newRetailers * S.retailer.reorder12)}</span><span class="k">Reorder within 12 months</span></div>
+        <div><span class="v">${money(k.newRetailers * t.R.gmvY1)}</span><span class="k">Cohort GMV, year 1</span></div>
+      </div>
+      <p class="note">The gap between attributed and incremental first orders is what platforms would claim but would have happened anyway. The plan is built on the incremental column.</p>
+    </section>`;
+  };
+
+  function chart(t) {
+    const rows = t.rows.filter(r => r.spend > 0).sort((a, b) => b.value - a.value);
+    const W = 640, L = 190, R = 70, rowH = 30, H = rows.length * rowH + 24;
+    const max = Math.max(...rows.map(r => Math.max(r.spend, r.value)), 1);
+    const sx = v => (v / max) * (W - L - R);
+    const ticks = [0, 0.25, 0.5, 0.75, 1].map(f => f * max);
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Spend and lifetime contribution by channel">`;
+    ticks.forEach(v => { s += `<line class="grid" x1="${L + sx(v)}" x2="${L + sx(v)}" y1="0" y2="${H - 18}"/><text x="${L + sx(v)}" y="${H - 4}" text-anchor="middle">${money(v)}</text>`; });
+    rows.forEach((r, i) => {
+      const y = i * rowH + 4;
+      s += `<text class="lbl" x="${L - 8}" y="${y + 15}" text-anchor="end">${esc(r.name.length > 28 ? r.name.slice(0, 27) + '…' : r.name)}</text>`;
+      s += `<rect class="spend" x="${L}" y="${y + 2}" width="${Math.max(sx(r.spend), 1)}" height="9" rx="2"/>`;
+      s += `<rect class="val-${r.side}" x="${L}" y="${y + 12}" width="${Math.max(sx(r.value), 1)}" height="11" rx="2"/>`;
+      s += `<text x="${L + Math.max(sx(r.spend), sx(r.value)) + 6}" y="${y + 21}">${x(r.value / r.spend)}</text>`;
+    });
+    return s + '</svg>';
+  }
+
+  function meter(ratio, band) {
+    const top = Math.max(40, band.max * 1.6), at = v => Math.min(Math.max(v / top, 0), 1) * 100;
+    return `<div class="meter" role="img" aria-label="Ratio ${fin(ratio) ? ratio.toFixed(1) : 'n/a'} against a band of ${band.min} to ${band.max}">
+      <div class="track"></div><div class="band" style="left:${at(band.min)}%;width:${at(band.max) - at(band.min)}%"></div>
+      ${fin(ratio) ? `<div class="mark" style="left:${at(ratio)}%"><span>${ratio.toFixed(1)}</span></div>` : ''}
+      <div class="ends"><span>0 · supply-heavy</span><span>${Math.round(top)}+ · demand-heavy</span></div></div>`;
+  }
+
+  V.channels = t => {
+    const side = (s, title, sub) => {
+      const rows = t.rows.filter(r => r.side === s), idx = id => S.channels.findIndex(c => c.id === id);
+      const tot = rows.reduce((a, r) => ({ spend: a.spend + r.spend, att: a.att + r.attributed, inc: a.inc + r.incremental, val: a.val + r.value }), { spend: 0, att: 0, inc: 0, val: 0 });
+      const mixSum = S.channels.filter(c => c.side === s).reduce((a, c) => a + c.mix, 0);
+      return `<section class="panel">
+        <span class="eyebrow">${sub}</span>
+        <div class="row" style="justify-content:space-between"><h3>${title}</h3><div class="row"><span class="hint">Budget ${money(t.sideBudget[s])}</span><button class="btn sm" type="button" data-act="opt-${s}">Rebalance to equal marginal returns</button></div></div>
+        <div class="tw"><table>
+          <thead><tr><th>Channel</th><th class="r">Mix %</th><th class="r">Spend</th><th class="r">Base CAC</th><th class="r">Elasticity</th><th class="r">CAC at spend</th><th class="r">Attributed</th><th class="r">Incr. factor</th><th class="r">Incremental</th><th class="r">iCAC</th><th class="r">Marginal iCAC</th><th class="r">LTV:CAC</th></tr></thead>
+          <tbody>${rows.map(r => { const i = idx(r.id), c = S.channels[i]; return `<tr>
+            <td>${esc(c.name)}<small>${esc(c.note)}</small></td>
+            <td class="r">${inp(`channels.${i}.mix`, { scale: 100, dp: 1, label: c.name + ' mix %' })}</td>
+            <td class="r">${money(r.spend)}</td>
+            <td class="r">${inp(`channels.${i}.baseCAC`, { label: c.name + ' base CAC' })}</td>
+            <td class="r">${inp(`channels.${i}.elasticity`, { dp: 2, label: c.name + ' elasticity' })}</td>
+            <td class="r">${usd(r.cac)}</td><td class="r">${int(r.attributed)}</td>
+            <td class="r">${pct(r.incrFactor)} <span class="chip ${r.evidence}">${r.evidence === 'measured' ? 'Lift' : 'MMM'}</span></td>
+            <td class="r">${int(r.incremental)}</td><td class="r">${usd(r.iCAC)}</td><td class="r">${usd(r.marginal)}</td>
+            <td class="r"><span class="chip ${ltvChip(r.ltvCac)}">${x(r.ltvCac)}</span></td></tr>`; }).join('')}
+          <tr class="tot"><td>Total</td><td class="r ${Math.abs(mixSum - 1) > 0.001 ? 'dn' : ''}">${pct(mixSum, 1)}</td><td class="r">${money(tot.spend)}</td><td></td><td></td><td></td><td class="r">${int(tot.att)}</td><td class="r">${pct(tot.inc / tot.att)}</td><td class="r">${int(tot.inc)}</td><td class="r">${usd(tot.spend / tot.inc)}</td><td></td><td></td></tr>
+          </tbody></table></div>
+        ${Math.abs(mixSum - 1) > 0.001 ? `<p class="note dn">Mix adds to ${pct(mixSum, 1)}. Spend is split pro rata, so the shares are read relative to each other.</p>` : ''}
+      </section>`;
+    };
+    return side('retailer', 'Retailer acquisition (demand)', `${pct(1 - S.supplyShare)} of acquisition · first-order retailers`) +
+      side('brand', 'Brand acquisition (supply)', `${pct(S.supplyShare)} of acquisition · activated brands with a first order`) +
+      `<section class="panel"><span class="eyebrow">How to read this</span><ul class="plain">
+        <li><b>CAC at spend</b> rises with budget: base CAC × (spend ÷ reference spend) ^ elasticity. Higher elasticity means the channel saturates sooner.</li>
+        <li><b>Incremental</b> = attributed × incrementality factor, from the latest lift test or, where none exists, the MMM. Edit both on Measurement.</li>
+        <li><b>Marginal iCAC</b> is what the next customer costs. Rebalancing moves money until every channel's marginal iCAC is equal, capped at 3× each channel's reference spend.</li>
+        <li>Retailer CAC already reflects the market mix (${x(t.marketCAC, 2)} blended) and the supply-depth effect (${x(t.netMult, 3)}).</li></ul></section>`;
+  };
+
+  V.winback = t => {
+    const tot = t.wb.reduce((a, w) => ({ spend: a.spend + w.spend, reached: a.reached + w.reached, incr: a.incr + w.incr, gmv: a.gmv + w.gmv, net: a.net + w.net }), { spend: 0, reached: 0, incr: 0, gmv: 0, net: 0 });
+    return `<section class="panel">
+      <span class="eyebrow">${money(t.winbackBudget)} · ${pct(S.winbackShare)} of the total budget</span>
+      <h2>Retargeting and win-back, measured against a holdout</h2>
+      <p class="note">Every segment keeps a standing holdout that sees no paid media. Only reactivations above the holdout rate count, so retargeting cannot take credit for retailers who would have reordered anyway.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Segment</th><th class="r">Budget %</th><th class="r">Spend</th><th class="r">Audience</th><th class="r">Reachable %</th><th class="r">Cost per reach</th><th class="r">Exposed rate</th><th class="r">Holdout rate</th><th class="r">12-mo GMV each</th><th class="r">Reached</th><th class="r">Incr. reactivations</th><th class="r">Cost per incr.</th><th class="r">Incr. GMV</th><th class="r">GMV iROAS</th><th class="r">Net rev. ROAS</th></tr></thead>
+        <tbody>${t.wb.map((w, i) => `<tr>
+          <td>${esc(w.name)}<small>${sideChip(w.side)}</small></td>
+          <td class="r">${inp(`winback.${i}.share`, { scale: 100, label: w.name + ' budget %' })}</td>
+          <td class="r">${money(w.spend)}</td>
+          <td class="r">${inp(`winback.${i}.size`, { cls: 'w', label: w.name + ' audience' })}</td>
+          <td class="r">${inp(`winback.${i}.reach`, { scale: 100, label: w.name + ' reachable %' })}</td>
+          <td class="r">${inp(`winback.${i}.costPerReach`, { label: w.name + ' cost per reach' })}</td>
+          <td class="r">${inp(`winback.${i}.exposed`, { scale: 100, dp: 1, label: w.name + ' exposed rate' })}</td>
+          <td class="r">${inp(`winback.${i}.holdout`, { scale: 100, dp: 1, label: w.name + ' holdout rate' })}</td>
+          <td class="r">${inp(`winback.${i}.gmv`, { label: w.name + ' GMV each' })}</td>
+          <td class="r">${int(w.reached)}</td><td class="r">${int(w.incr)}</td><td class="r">${usd(w.costPerIncr)}</td>
+          <td class="r">${money(w.gmv)}</td><td class="r"><span class="chip ${w.iROAS >= 5 ? 'good' : w.iROAS >= 2 ? 'warn' : 'bad'}">${x(w.iROAS)}</span></td><td class="r">${x(w.netROAS, 2)}</td></tr>`).join('')}
+          <tr class="tot"><td>Total</td><td></td><td class="r">${money(tot.spend)}</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="r">${int(tot.reached)}</td><td class="r">${int(tot.incr)}</td><td class="r">${usd(tot.spend / tot.incr)}</td><td class="r">${money(tot.gmv)}</td><td class="r">${x(tot.gmv / tot.spend)}</td><td class="r">${x(tot.net / tot.spend, 2)}</td></tr>
+        </tbody></table></div>
+      <p class="note">Reach saturates: reached = audience × reachable × (1 − e^(−spend ÷ (audience × reachable × cost per reach))). A segment whose net revenue ROAS stays under 1× only pays back through later reorders.</p>
+    </section>
+    <section class="panel"><span class="eyebrow">Playbook</span><h3>What runs in each segment</h3><ul class="plain">
+      <li><b>Signed up, no first order:</b> first-order incentives (opening-order terms, free returns on the first order) in Meta and Google Customer Match, sequenced over 21 days.</li>
+      <li><b>First order, no reorder:</b> dynamic product ads with the retailer's own past brands and similar bestsellers, timed to their category's sell-through cycle.</li>
+      <li><b>Lapsed 180+ days:</b> seasonal buying moments (holiday, spring gift) with new-brand discovery creative; suppress anyone who reordered in the last 30 days.</li>
+      <li><b>Abandoned cart:</b> dynamic creative of the exact products left in cart, capped at 3 impressions a day for 7 days.</li>
+      <li><b>Dormant brands:</b> remind brands of retailer demand in their category and of promo programs; lowest budget because brand reactivation is mostly owned by account teams.</li></ul></section>`;
+  };
+
+  V.measurement = t => {
+    const chs = S.channels.map((c, i) => ({ c, i, r: t.rows.find(r => r.id === c.id) }));
+    return `<section class="panel">
+      <span class="eyebrow">Incrementality triangulation</span>
+      <h2>MMM sets the budget, lift tests calibrate it, platform numbers steer bids</h2>
+      <p class="note">Each channel carries two reads of the share of platform-attributed customers that are truly incremental. A lift or geo test, when one exists, overrides the MMM read. Where they disagree by more than 15 points, the channel goes back on the test calendar. Leave the lift box empty if no test has read out.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Channel</th><th>Side</th><th class="r">Spend</th><th class="r">Platform attributed</th><th class="r">MMM read</th><th class="r">Lift read</th><th>Lift source</th><th class="r">Used</th><th class="r">Incremental</th><th>Status</th></tr></thead>
+        <tbody>${chs.map(({ c, i, r }) => { const gap = c.lift != null ? Math.abs(c.lift - c.mmm) : null;
+          const st = c.lift == null ? '<span class="chip warn">Needs a test</span>' : gap > 0.15 ? '<span class="chip bad">Reads disagree</span>' : '<span class="chip good">Calibrated</span>';
+          return `<tr><td>${esc(c.name)}</td><td>${sideChip(c.side)}</td><td class="r">${money(r.spend)}</td><td class="r">${int(r.attributed)}</td>
+            <td class="r">${inp(`channels.${i}.mmm`, { scale: 100, label: c.name + ' MMM read' })}</td>
+            <td class="r">${inp(`channels.${i}.lift`, { scale: 100, blank: true, label: c.name + ' lift read' })}</td>
+            <td>${esc(c.liftSrc || '—')}</td><td class="r">${pct(M.incrOf(c))}</td><td class="r">${int(r.incremental)}</td><td>${st}</td></tr>`; }).join('')}
+        </tbody></table></div>
+    </section>
+    <div class="grid2 even">
+      <section class="panel"><span class="eyebrow">Test calendar</span><h3>Next four quarters</h3>
+        <div class="tw"><table><thead><tr><th>Test</th><th>Design</th><th>Decides</th></tr></thead><tbody>
+          <tr><td><b>Performance Max geo holdout</b></td><td>20 matched DMA pairs, 6 weeks, PMax dark in control</td><td>Whether PMax retailer CAC holds once brand search is netted out</td></tr>
+          <tr><td><b>TikTok &amp; Pinterest conversion lift</b></td><td>Platform holdout, 10% control, first-order retailers as the KPI</td><td>Replaces the MMM-only read before scaling past reference spend</td></tr>
+          <tr><td><b>CTV geo test</b></td><td>Synthetic control, 8 weeks, branded search and direct sign-ups as KPIs</td><td>Upper-funnel share of the retailer budget</td></tr>
+          <tr><td><b>Win-back always-on holdout</b></td><td>10% of every segment never sees paid media</td><td>Retargeting budget, segment by segment</td></tr>
+          <tr><td><b>Brand-side lift on Meta</b></td><td>Conversion Lift on brand sign-ups that reach a first order</td><td>Supply share of acquisition</td></tr>
+          <tr><td><b>International launch holdouts</b></td><td>Hold one region dark per new market for 6 weeks</td><td>Market weights on International</td></tr>
+        </tbody></table></div></section>
+      <section class="panel"><span class="eyebrow">Operating rhythm</span><h3>How the numbers are used</h3><ul class="plain">
+        <li><b>Weekly:</b> pacing and bids on platform data and MTA paths. Fast and directional; never used to set budgets.</li>
+        <li><b>Monthly:</b> MMM refresh (Bayesian, weekly grain, by side and market) with lift results as priors. Budget moves when marginal iCAC differs across channels by more than 20%.</li>
+        <li><b>Quarterly:</b> cohort LTV true-up. Reorder rate and take rate from the last four cohorts replace the planning assumptions on Unit economics.</li>
+        <li><b>Guardrails:</b> no channel scales past 3× its reference spend without a lift read; any channel whose reads disagree is held flat until retested.</li>
+        <li><b>AI in the workflow:</b> automated anomaly alerts on pacing and CAC, creative variant generation for localization, and an agent that drafts the weekly readout from MMM and platform pulls for a human to edit.</li></ul></section>
+    </div>`;
+  };
+
+  V.international = t => {
+    const tot = t.markets.reduce((a, m) => ({ w: a.w + m.weight, spend: a.spend + m.spend, r: a.r + m.retailers, b: a.b + m.brands, g: a.g + m.gmvY1 }), { w: 0, spend: 0, r: 0, b: 0, g: 0 });
+    return `<section class="panel">
+      <span class="eyebrow">Market mix</span>
+      <h2>Where acquisition dollars go by market</h2>
+      <p class="note">Weight sets each market's share of acquisition spend. The CAC multiplier compares local cost per customer with the US; the order-size multiplier converts local GMV to USD. Customers split by weight ÷ CAC multiplier.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Market</th><th>Stage</th><th class="r">Weight %</th><th class="r">CAC ×</th><th class="r">Order size ×</th><th class="r">Spend</th><th class="r">New retailers</th><th class="r">New brands</th><th class="r">Retailer iCAC</th><th class="r">Y1 GMV</th><th class="r">Payback</th><th>Local plan</th></tr></thead>
+        <tbody>${t.markets.map((m, i) => `<tr><td><b>${esc(m.name)}</b></td>
+          <td><select id="in-markets-${i}-stage" data-path="markets.${i}.stage" aria-label="${esc(m.name)} stage">${['Core', 'Scaling', 'Test'].map(s => `<option${s === m.stage ? ' selected' : ''}>${s}</option>`).join('')}</select></td>
+          <td class="r">${inp(`markets.${i}.weight`, { scale: 100, label: m.name + ' weight' })}</td>
+          <td class="r">${inp(`markets.${i}.cac`, { dp: 2, label: m.name + ' CAC multiplier' })}</td>
+          <td class="r">${inp(`markets.${i}.aov`, { dp: 2, label: m.name + ' order size multiplier' })}</td>
+          <td class="r">${money(m.spend)}</td><td class="r">${int(m.retailers)}</td><td class="r">${int(m.brands)}</td><td class="r">${usd(m.iCAC)}</td>
+          <td class="r">${money(m.gmvY1)}</td><td class="r"><span class="chip ${payChip(m.payback)}">${mo(m.payback)}</span></td><td>${esc(m.note)}</td></tr>`).join('')}
+          <tr class="tot"><td>Total</td><td></td><td class="r ${Math.abs(tot.w - 1) > 0.001 ? 'dn' : ''}">${pct(tot.w)}</td><td class="r">${x(t.marketCAC, 2)}</td><td></td><td class="r">${money(tot.spend)}</td><td class="r">${int(tot.r)}</td><td class="r">${int(tot.b)}</td><td class="r">${usd(tot.spend * (1 - S.supplyShare) / tot.r)}</td><td class="r">${money(tot.g)}</td><td></td><td></td></tr>
+        </tbody></table></div>
+    </section>
+    <section class="panel"><span class="eyebrow">Launch sequence</span><h3>How a market moves from Test to Core</h3><ul class="plain">
+      <li><b>Test:</b> search and Meta only, local-language creative, one region held dark for a geo read. Exit when retailer payback is under 18 months on incremental CAC.</li>
+      <li><b>Scaling:</b> add Pinterest, partners and win-back; bring the market into the MMM as its own geo. Exit when the MMM and lift reads agree within 15 points.</li>
+      <li><b>Core:</b> full channel mix including CTV, budget set by marginal iCAC alongside the US.</li>
+      <li>Supply and demand launch together: brand acquisition in a new market starts one quarter ahead so retailers find a local catalog on day one.</li></ul></section>`;
+  };
+
+  V.economics = t => {
+    const R = t.R, B = t.B;
+    return `<div class="grid2 even">
+      <section class="panel"><span class="eyebrow">Demand side</span><h3>Retailer unit economics</h3>
+        <div class="fields">
+          ${field('First order size', 'retailer.firstAOV', '$')}${field('Repeat order size', 'retailer.repeatAOV', '$')}
+          ${field('Reorder within 12 months', 'retailer.reorder12', '%', { scale: 100 })}${field('Repeat orders in year 1', 'retailer.repeatOrders', '', { dp: 1 })}
+          ${field('Yearly retention after year 1', 'retailer.retention', '%', { scale: 100 })}${field('Order growth per retained retailer', 'retailer.growth', '×', { dp: 2 })}
+          ${field('Take rate, first order', 'retailer.takeFirst', '%', { scale: 100, dp: 1 })}${field('Take rate, repeat orders', 'retailer.takeRepeat', '%', { scale: 100, dp: 1 })}
+          ${field('Contribution margin on net revenue', 'retailer.margin', '%', { scale: 100 })}${field('LTV horizon', 'retailer.years', 'yrs')}
+        </div>
+        <div class="tw"><table><thead><tr><th>Year</th><th class="r">GMV per retailer</th><th class="r">Net revenue</th><th class="r">Contribution</th></tr></thead><tbody>
+          ${R.years.map((y, i) => `<tr><td>Year ${i + 1}</td><td class="r">${usd(y.gmv)}</td><td class="r">${usd(y.net)}</td><td class="r">${usd(y.net * S.retailer.margin)}</td></tr>`).join('')}
+          <tr class="tot"><td>Lifetime</td><td class="r">${usd(R.gmvLife)}</td><td></td><td class="r">${usd(R.ltv)}</td></tr></tbody></table></div>
+      </section>
+      <section class="panel"><span class="eyebrow">Supply side</span><h3>Brand unit economics</h3>
+        <div class="fields">
+          ${field('Year-1 GMV per new brand', 'brand.gmvY1', '$', { cls: 'w' })}${field('Share of that GMV net new to the marketplace', 'brand.incrShare', '%', { scale: 100 })}
+          ${field('Take rate', 'brand.take', '%', { scale: 100, dp: 1 })}${field('Yearly brand retention', 'brand.retention', '%', { scale: 100 })}
+          ${field('GMV growth per retained brand', 'brand.growth', '×', { dp: 2 })}${field('Retailers each brand brings', 'brand.referredRetailers', '', { dp: 2 })}
+          ${field('Share of referred retailer LTV credited', 'brand.referredValue', '%', { scale: 100 })}
+        </div>
+        <div class="tw"><table><tbody>
+          <tr><td>Year-1 contribution per brand</td><td class="r">${usd(B.contribY1)}</td></tr>
+          <tr><td>Referred-retailer value per brand</td><td class="r">${usd(B.referred)}</td></tr>
+          <tr class="tot"><td>Brand LTV (${S.retailer.years} years)</td><td class="r">${usd(B.ltv)}</td></tr></tbody></table></div>
+      </section>
+    </div>
+    <div class="grid2 even">
+      <section class="panel"><span class="eyebrow">Network effect</span><h3>Supply depth lowers retailer CAC</h3>
+        <div class="fields">${field('Active brands today', 'network.activeBrands', '', { cls: 'w' })}${field('Effect strength', 'network.effect', '', { dp: 2 })}</div>
+        <p class="note">Retailer CAC × (1 + new brands ÷ active brands) ^ −strength. This plan's ${int(t.kpi.newBrands)} new brands make retailer CAC ${pct(1 - t.netMult, 1)} lower. Set strength to 0 to switch the effect off.</p></section>
+      <section class="panel"><span class="eyebrow">Balance band</span><h3>Healthy new retailers per new brand</h3>
+        <div class="fields">${field('Lower bound', 'balance.min', '')}${field('Upper bound', 'balance.max', '')}</div>
+        <p class="note">Below the band, new brands wait for orders and churn. Above it, retailers find a thin catalog and conversion falls. Set it from historical cohort data on fill rate and first-order conversion.</p></section>
+    </div>
+    <section class="panel"><span class="eyebrow">Budget versions</span><h3>Annual paid media budget</h3>
+      <div class="fields">${field('Low', 'budgets.low', '$', { cls: 'w' })}${field('Medium', 'budgets.medium', '$', { cls: 'w' })}${field('High', 'budgets.high', '$', { cls: 'w' })}</div></section>`;
+  };
+
+  // ---------- render ----------
+  function render() {
+    const t = M.plan(S);
+    $('ver-seg').innerHTML = ['low', 'medium', 'high'].map(v => `<button type="button" data-ver="${v}" aria-pressed="${S.version === v}">${v[0].toUpperCase() + v.slice(1)} ${money(S.budgets[v])}</button>`).join('');
+    $('supply').value = Math.round(S.supplyShare * 100); $('supply-o').textContent = pct(S.supplyShare);
+    $('supply-hint').textContent = `Brands ${money(t.sideBudget.brand)} · Retailers ${money(t.sideBudget.retailer)}`;
+    $('winback').value = Math.round(S.winbackShare * 100); $('winback-o').textContent = pct(S.winbackShare);
+    $('winback-hint').textContent = `${money(t.winbackBudget)} against people who already know the marketplace`;
+    $('tabs').innerHTML = TABS.map(([id, label]) => `<a href="#${id}" role="tab" id="tab-${id}" aria-selected="${tab === id}" aria-controls="view">${label}</a>`).join('');
+
+    // Keep whatever the person is typing exactly as typed across the redraw.
+    const a = document.activeElement, keep = a && a.dataset && a.dataset.path && a.tagName === 'INPUT' ? { id: a.id, v: a.value, s: a.selectionStart, e: a.selectionEnd } : null;
+    $('view').innerHTML = V[tab](t);
+    if (keep) { const el = $(keep.id); if (el) { el.value = keep.v; el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch (e) { /* not a text field */ } } }
+    save();
+  }
+
+  function flash(msg) { $('status').textContent = msg; clearTimeout(flash.t); flash.t = setTimeout(() => { $('status').textContent = ''; }, 3500); }
+
+  // ---------- events ----------
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (el.id === 'supply') { S.supplyShare = +el.value / 100; return render(); }
+    if (el.id === 'winback') { S.winbackShare = +el.value / 100; return render(); }
+    if (!el.dataset.path) return;
+    if (el.tagName === 'SELECT') { setPath(S, el.dataset.path, el.value); return render(); }
+    const raw = el.value.replace(/[$,%\s]/g, '');
+    if (raw === '' && el.dataset.blank) { setPath(S, el.dataset.path, null); return render(); }
+    const n = parseFloat(raw);
+    if (!Number.isFinite(n)) return; // half-typed, wait for more
+    setPath(S, el.dataset.path, n / (+el.dataset.scale || 1));
+    render();
+  });
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.ver) { S.version = b.dataset.ver; render(); return; }
+    const act = b.dataset.act || b.id;
+    if (act === 'opt-retailer' || act === 'opt-brand') {
+      const side = act.slice(4), before = M.plan(S).kpi[side === 'retailer' ? 'newRetailers' : 'newBrands'];
+      S = M.optimizeMix(S, side);
+      const after = M.plan(S).kpi[side === 'retailer' ? 'newRetailers' : 'newBrands'];
+      render(); flash(`Rebalanced ${side} channels: ${after >= before ? '+' : ''}${int(after - before)} incremental ${side}s at the same budget.`);
+    } else if (act === 'best-share') {
+      S.supplyShare = M.bestSupplyShare(S).share; render(); flash(`Brand share set to ${pct(S.supplyShare)}.`);
+    } else if (act === 'reset') {
+      if (b.dataset.armed) { S = M.clone(M.DEFAULTS); delete b.dataset.armed; b.textContent = 'Reset to example'; render(); flash('Example plan restored.'); }
+      else { b.dataset.armed = '1'; b.textContent = 'Click again to reset'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Reset to example'; }, 4000); }
+    } else if (act === 'pdf') {
+      exportPDF(b);
+    } else if (act === 'copy-csv') {
+      const t = M.plan(S), q = s => `"${String(s).replace(/"/g, '""')}"`;
+      const lines = [['Type', 'Side', 'Line', 'Spend', 'Attributed', 'Incremental', 'iCAC', 'Marginal iCAC', 'LTV', 'Contribution'].join(',')]
+        .concat(t.rows.map(r => ['Acquisition', r.side, q(r.name), Math.round(r.spend), Math.round(r.attributed), Math.round(r.incremental), Math.round(r.iCAC), Math.round(r.marginal), Math.round(r.ltv), Math.round(r.value)].join(',')))
+        .concat(t.wb.map(w => ['Win-back', w.side, q(w.name), Math.round(w.spend), '', Math.round(w.incr), Math.round(w.costPerIncr), '', '', Math.round(w.net * S.retailer.margin)].join(',')));
+      const text = lines.join('\n');
+      const done = () => flash('Plan copied as CSV. Paste it into a spreadsheet.');
+      const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (err) { flash('Copy was blocked. Select the text in the box and copy it.'); } ta.remove(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+    }
+  });
+
+  // ---------- PDF export ----------
+  // Every tab, one after another, in the light theme, landscape A4. Libraries load on first use only.
+  const LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
+  const loadScript = src => new Promise((ok, fail) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => fail(new Error('Could not load ' + src)); document.head.appendChild(el); });
+  async function exportPDF(btn) {
+    const label = btn.textContent, root = document.documentElement, theme = root.getAttribute('data-theme'), was = tab;
+    btn.disabled = true; btn.textContent = 'Building PDF…';
+    try {
+      for (const src of LIBS) await loadScript(src);
+      const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+      const W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight(), m = 24;
+      root.setAttribute('data-theme', 'light'); document.body.classList.add('exporting');
+      const bg = getComputedStyle(document.body).backgroundColor;
+      let first = true;
+      for (const [id, name] of TABS) {
+        tab = id; render();
+        await new Promise(r => setTimeout(r, 60));
+        const canvas = await window.html2canvas(document.querySelector('.wrap'), { scale: 1.5, backgroundColor: bg, windowWidth: 1400, width: Math.min(document.querySelector('.wrap').scrollWidth, 1500) });
+        // Slice the tall capture into page-height strips.
+        const pxPerPt = canvas.width / (W - m * 2), sliceH = Math.floor((H - m * 2) * pxPerPt);
+        for (let y = 0; y < canvas.height; y += sliceH) {
+          const part = document.createElement('canvas'); part.width = canvas.width; part.height = Math.min(sliceH, canvas.height - y);
+          part.getContext('2d').drawImage(canvas, 0, y, canvas.width, part.height, 0, 0, canvas.width, part.height);
+          if (!first) pdf.addPage(); first = false;
+          pdf.setFillColor(...(bg.match(/\d+/g) || [255, 255, 255]).slice(0, 3).map(Number)); pdf.rect(0, 0, W, H, 'F');
+          pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', m, m, W - m * 2, part.height / pxPerPt);
+          pdf.setFontSize(8); pdf.setTextColor(125, 116, 105); pdf.text(`${name} · ${S.version} plan · illustrative`, m, H - 10);
+        }
+      }
+      pdf.save(`marketplace-paid-media-plan-${S.version}.pdf`);
+      flash('PDF downloaded: every tab, landscape A4.');
+    } catch (err) {
+      flash('The PDF could not be built: ' + err.message + '. Check the connection and try again.');
+    } finally {
+      document.body.classList.remove('exporting');
+      if (theme == null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme);
+      tab = was; render(); btn.disabled = false; btn.textContent = label;
+    }
+  }
+
+  window.addEventListener('hashchange', () => { tab = tabFromHash(); render(); });
+  render();
+})();
+</script>
+</body>
+</html>
