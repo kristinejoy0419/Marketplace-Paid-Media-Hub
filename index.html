@@ -18,34 +18,23 @@
       <h1>Marketplace Paid Media Hub</h1>
       <p class="sub">Plan paid media for both sides of a wholesale marketplace: independent retailers who buy and brands who sell. Every dollar is judged on incremental customers, GMV and lifetime contribution, not platform-reported conversions.</p>
     </div>
-    <span class="pill" id="example-pill">Example plan · illustrative numbers, not company data</span>
+    <div class="hero-side">
+      <div class="cheer-wrap">
+        <div class="cheer" id="cheer" aria-live="polite"><span id="cheer-t"></span><button class="cheer-new" id="cheer-new" type="button" title="Another one" aria-label="Show another line">↻</button><i class="dot d1"></i><i class="dot d2"></i><i class="dot d3"></i></div>
+        <img class="spider" id="spider" src="img/spider.webp" alt="A fluffy jumping spider" title="Click me for another line" width="300" height="249">
+      </div>
+      <span class="pill" id="example-pill">Example plan · illustrative numbers, not company data</span>
+    </div>
   </header>
 
-  <section class="controls" aria-label="Plan controls">
-    <div class="ctl">
-      <span class="eyebrow">Annual budget</span>
-      <div class="seg" role="group" aria-label="Budget version" id="ver-seg"></div>
+  <div class="layout">
+    <aside class="rail" id="rail" aria-label="Plan inputs"></aside>
+    <div class="out">
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <nav class="tabs" role="tablist" id="tabs" aria-label="Sections"></nav>
+      <main id="view"></main>
     </div>
-    <div class="ctl">
-      <label class="eyebrow" for="supply">Brand (supply) share of acquisition</label>
-      <div class="slide"><input type="range" id="supply" min="5" max="40" step="1"><output id="supply-o"></output></div>
-      <span class="hint" id="supply-hint"></span>
-    </div>
-    <div class="ctl">
-      <label class="eyebrow" for="winback">Retargeting &amp; win-back share</label>
-      <div class="slide"><input type="range" id="winback" min="0" max="25" step="1"><output id="winback-o"></output></div>
-      <span class="hint" id="winback-hint"></span>
-    </div>
-    <div class="ctl btns">
-      <button class="btn" id="pdf" type="button">Download PDF</button>
-      <button class="btn ghost" id="copy-csv" type="button">Copy plan as CSV</button>
-      <button class="btn ghost" id="reset" type="button">Reset to example</button>
-    </div>
-  </section>
-  <div class="status" id="status" role="status" aria-live="polite"></div>
-
-  <nav class="tabs" role="tablist" id="tabs" aria-label="Sections"></nav>
-  <main id="view"></main>
+  </div>
 
   <footer class="foot">All figures are an illustrative planning model. Replace the example inputs with real cohort, MMM and lift data before using a number in a decision. Inputs save in this browser only.</footer>
 </div>

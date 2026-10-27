@@ -51,24 +51,50 @@ header.top .eyebrow{color:var(--rose)}
 header.top h1{font-family:var(--f-sc);font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:.015em;line-height:1.05;display:inline-block;margin-top:6px;
   background-image:var(--h1);-webkit-background-clip:text;background-clip:text;color:var(--rose);-webkit-text-fill-color:transparent}
 header.top .sub{color:var(--hero-sub);max-width:72ch;font-size:13.5px;margin-top:8px}
-.pill{align-self:flex-start;font-size:11px;font-weight:600;border:1px solid var(--rose-line);background:var(--surface);color:var(--rose);border-radius:999px;padding:6px 12px}
+.pill{align-self:flex-end;font-size:11px;font-weight:600;border:1px solid var(--rose-line);background:var(--surface);color:var(--rose);border-radius:999px;padding:6px 12px}
 
-/* controls */
-.controls{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;grid-template-rows:auto auto auto;gap:6px 28px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shadow)}
-/* each control spans the same three rows (label, control, hint) so labels, sliders and hints line up across columns */
-.ctl{display:grid;grid-row:span 3;grid-template-rows:subgrid;min-width:0}
-.ctl>.eyebrow{align-self:end}
-.ctl>.seg,.ctl>.slide{align-self:center}
-.ctl.btns{display:flex;flex-direction:column;gap:8px;align-self:center}
-.ctl.btns .btn{width:100%}
-@media (max-width:900px){
-  .controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:none;gap:6px 24px}
-  .ctl:first-child,.ctl.btns{grid-column:1/-1}
-  .ctl:first-child{margin-bottom:10px}
-  .ctl.btns{flex-direction:row;flex-wrap:wrap;margin-top:10px}
-  .ctl.btns .btn{width:auto}
-}
-@media (max-width:560px){.controls{grid-template-columns:minmax(0,1fr)}.ctl{margin-bottom:10px}}
+/* the spider and its speech bubble */
+header.top>*{position:relative}
+.hero-side{display:flex;flex-direction:column;align-items:flex-end;gap:10px;max-width:420px}
+.cheer-wrap{display:flex;align-items:flex-end;gap:6px}
+.cheer{position:relative;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--hero-line);border-radius:26px;padding:12px 14px 12px 18px;margin-bottom:46px;font-family:var(--f-display);font-style:italic;font-size:15px;line-height:1.35;color:var(--ink);box-shadow:0 4px 14px rgba(90,61,43,.08)}
+.cheer-new{border:0;background:transparent;color:var(--rose);font-size:15px;cursor:pointer;padding:2px 4px;border-radius:8px;font-style:normal}
+.cheer-new:hover{background:var(--rose-soft)}
+.cheer .dot{position:absolute;background:var(--surface);border:1px solid var(--hero-line);border-radius:50%}
+.cheer .d1{width:14px;height:14px;right:22px;bottom:-18px}.cheer .d2{width:9px;height:9px;right:6px;bottom:-32px}.cheer .d3{width:6px;height:6px;right:-6px;bottom:-42px}
+.spider{width:120px;height:auto;filter:drop-shadow(0 4px 8px rgba(61,42,29,.18));flex:none;cursor:pointer;transform-origin:50% 100%;animation:hop 3.2s ease-in-out infinite}
+.spider:hover{animation-duration:1.1s}
+@keyframes hop{0%,62%,100%{transform:translateY(0) scale(1,1)}68%{transform:translateY(2px) scale(1.06,.92)}78%{transform:translateY(-14px) scale(.96,1.05)}88%{transform:translateY(0) scale(1.04,.95)}}
+@media (prefers-reduced-motion:reduce){.spider{animation:none}}
+@media (max-width:760px){.hero-side{align-items:stretch;max-width:none}.cheer-wrap{justify-content:space-between}.spider{width:96px}}
+body.exporting .spider{animation:none}
+
+/* layout: inputs pane on the left, results on the right */
+.layout{display:grid;grid-template-columns:minmax(290px,340px) minmax(0,1fr);gap:20px;align-items:start}
+.out{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+/* input pane */
+.rail{display:flex;flex-direction:column;gap:10px;min-width:0}
+@media (min-width:981px){.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow-y:auto;padding-right:2px}}
+.rail details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.rail summary{cursor:pointer;list-style:none;padding:13px 16px;font-family:var(--f-sc);font-weight:700;font-size:13.5px;letter-spacing:.03em;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rail summary::-webkit-details-marker{display:none}
+.rail summary::after{content:"+";font-family:var(--f-body);color:var(--muted);font-weight:600}
+.rail details[open] summary::after{content:"−"}
+.rail summary .hint{font-family:var(--f-body);font-weight:500;letter-spacing:0;margin-left:auto;text-align:right}
+.rail summary:focus-visible{outline:2px solid var(--rose);outline-offset:-2px;border-radius:var(--r)}
+.sec{display:flex;flex-direction:column;gap:8px;padding:2px 16px 16px;min-width:0}
+.sec>.eyebrow{margin-top:6px}
+.sec.actions{padding:4px 0}
+.sec.actions .btn{width:100%}
+.fields.one{grid-template-columns:minmax(0,1fr)}
+.mkt{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,58px);gap:6px;align-items:center;font-size:12px}
+.mkt input{width:100%;font:inherit;font-weight:600;text-align:right;padding:5px 6px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.mkt input:focus{border-color:var(--rose);outline:2px solid var(--rose-line);outline-offset:1px}
+.mkt.head{font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mkt.head span:not(:first-child){text-align:right}
+.rail a{color:var(--rose)}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--muted);background:var(--surface);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -137,7 +163,8 @@ td input:focus,.field input:focus{border-color:var(--rose);outline:2px solid var
 .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 18px}
 .field{display:flex;align-items:center;gap:8px;font-size:12.5px;justify-content:space-between;border-bottom:1px dashed var(--line);padding-bottom:6px}
 .field label{flex:1 1 auto;min-width:0}
-.field .u{color:var(--muted);font-size:11px;width:16px}
+.field .u{color:var(--muted);font-size:11px;width:20px}
+.field input.w{width:96px}
 
 /* charts */
 .chart{width:100%;height:auto;display:block}
@@ -174,7 +201,7 @@ td input:focus,.field input:focus{border-color:var(--rose);outline:2px solid var
 ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;max-width:95ch}
 
 /* PDF export: freeze the light look and hide the controls that do nothing on paper */
-body.exporting .ctl.btns,body.exporting .status,body.exporting [data-act]{visibility:hidden}
+body.exporting .rail,body.exporting .status{display:none}
+body.exporting .layout{grid-template-columns:minmax(0,1fr)}
+body.exporting [data-act]{visibility:hidden}
 body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColor;color:var(--rose)}
-body.exporting .slide input{display:none}
-body.exporting .slide output{text-align:left;font-size:18px}

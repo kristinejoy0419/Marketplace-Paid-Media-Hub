@@ -8,7 +8,8 @@ const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 let html = read('index.html')
   .replace('<link rel="stylesheet" href="css/styles.css">', () => `<style>\n${read('css/styles.css')}</style>`)
   .replace('<script src="js/model.js"></script>', () => `<script>\n${read('js/model.js')}</script>`)
-  .replace('<script src="js/app.js"></script>', () => `<script>\n${read('js/app.js')}</script>`);
+  .replace('<script src="js/app.js"></script>', () => `<script>\n${read('js/app.js')}</script>`)
+  .replace('src="img/spider.webp"', () => `src="data:image/webp;base64,${fs.readFileSync(path.join(root, 'img/spider.webp')).toString('base64')}"`);
 
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(root, 'dist', 'hub.html'), html);

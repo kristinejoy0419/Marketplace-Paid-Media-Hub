@@ -6,6 +6,8 @@ The example plan is built around a wholesale marketplace like Faire. **Every num
 
 ## What it does
 
+The **input pane** on the left holds the plan settings: budget versions and splits, market weights, retailer and brand unit economics, and marketplace dynamics. The tabs on the right show results. Channel, MMM/lift and win-back inputs stay in their own tables.
+
 | Tab | What it answers |
 | --- | --- |
 | **Summary** | What the budget buys: incremental retailers and brands, first-year GMV, incremental CAC, LTV:CAC, payback, marketplace balance, and where the next $1M should go. |
@@ -13,11 +15,11 @@ The example plan is built around a wholesale marketplace like Faire. **Every num
 | **Retargeting & win-back** | Paid media against signed-up-but-not-ordered, no-reorder, lapsed, abandoned-cart and dormant-brand segments, measured against a standing holdout. |
 | **Measurement** | MMM and lift reads per channel, which one the plan uses, where they disagree, the test calendar and the weekly/monthly/quarterly operating rhythm. |
 | **International** | Spend, customers, iCAC, GMV and payback by market, with a Test → Scaling → Core launch sequence. |
-| **Unit economics** | Retailer and brand LTV inputs (order size, reorder rate, take rate, retention, margin), the supply-depth network effect, the balance band and the budget versions. |
+| **Unit economics** | Retailer and brand lifetime value year by year, the supply-depth network effect and the balance band. |
 
 **Download PDF** saves every tab as a landscape A4 PDF in the light theme (it loads html2canvas and jsPDF from cdnjs on first use). **Copy plan as CSV** copies the channel and win-back lines for a spreadsheet.
 
-The controls at the top set the budget version ($20M, $50M or $100M by default), the brand (supply) share of acquisition and the win-back share. The Summary tab also scans for the brand share that returns the most lifetime contribution.
+The input pane sets the budget version ($20M, $50M or $100M by default), the brand (supply) share of acquisition and the win-back share. The Summary tab also scans for the brand share that returns the most lifetime contribution.
 
 ## How the model works
 
@@ -55,5 +57,6 @@ css/styles.css        styles, light and dark themes
 js/model.js           the planning model (browser + Node)
 js/app.js             tabs, inputs, rendering
 test/model.test.js    model tests
+img/spider.webp       the spider
 scripts/build-single.js  builds dist/hub.html
 ```
