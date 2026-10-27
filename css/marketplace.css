@@ -1,0 +1,29 @@
+/* Marketplace additions: JD-based split sliders, marketplace tabs, PDF export */
+.mp-split{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:12px;border:1px solid var(--rose-line);border-radius:12px;background:var(--rose-soft)}
+.mp-split .eyebrow{display:flex;justify-content:space-between;gap:8px}
+.mp-split .hint{font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted)}
+.mp-sl{display:grid;grid-template-columns:minmax(0,1fr) 44px;grid-template-rows:auto auto;column-gap:10px;align-items:center}
+.mp-sl label{grid-column:1/-1;font-size:12px;font-weight:600;color:var(--ink)}
+.mp-sl input[type=range]{width:100%;accent-color:var(--rose);margin:0}
+.mp-sl output{font-variant-numeric:tabular-nums;font-weight:700;color:var(--rose);text-align:right}
+.mp-split .note strong{color:var(--ink)}
+.mp-card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--sunk);display:flex;flex-direction:column;gap:8px;min-width:0}
+.mp-card h3{font-size:14px;margin:0}
+.mp-card p{margin:0}
+.mp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.mp-grid fieldset{border:1px solid var(--line);border-radius:12px;padding:10px 14px 12px;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mp-grid legend{font-weight:700;font-size:12px;padding:0 6px}
+.mp-f{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px}
+.mp input.rate{text-align:right}
+.mp td.n input.rate{margin:0}
+.chip.mp-ok{background:var(--green-soft);color:var(--green)}
+.mp .mp-bad{color:var(--over);font-weight:700}
+.mp tr.mp-cur td{background:var(--rose-soft);font-weight:600}
+/* PDF export: one column, light theme, no inputs rail */
+body.exporting .rail,body.exporting .te-bar,body.exporting .bar .btns,body.exporting #x-status,body.exporting #tabs,body.exporting .cheer-wrap{display:none!important}
+body.exporting .layout{grid-template-columns:minmax(0,1fr)}
+body.exporting .spider{animation:none}
+body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColor;color:#3a1a28}
+/* marketplace budgets run to eight figures: give the rail's $ fields room */
+.li.mkt{grid-template-columns:auto minmax(72px,1fr) 46px 104px 38px auto}
+.li.mkt input[type=number],.li.ch input[type=number]{font-size:11px;padding-left:4px!important;padding-right:4px!important;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
