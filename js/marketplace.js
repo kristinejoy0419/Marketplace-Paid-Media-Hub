@@ -54,6 +54,16 @@ function input(R){
 const planOf=R=>M.plan(input(R));
 window.mpPlan=planOf;
 
+// Hover definitions for the growth metrics (how the model computes each one)
+const TIP={
+ budget:'Total paid media spend for this version: retailer acquisition + brand acquisition + retargeting & win-back.',
+ retailers:'Incremental new retailers: shops that sign up and place a first order because of paid media. Platform-reported customers × incrementality (lift test read where one exists, otherwise MMM), with CAC rising as spend grows.',
+ rICAC:'Retailer incremental CAC = retailer acquisition spend ÷ incremental new retailers.',
+ brands:'Incremental new brands: brands onboarded and activated because of paid media, discounted for incrementality the same way.',
+ bICAC:'Brand incremental CAC = brand acquisition spend ÷ incremental new brands.',
+ gmv:'First-year GMV: wholesale order value in the first 12 months from new retailers (first order + reorders), net-new GMV from new brands, retailers those brands bring, and incremental win-back reorders.',
+ payback:'Retailer payback = retailer iCAC ÷ monthly first-year contribution per retailer (take rate × GMV × contribution margin ÷ 12). Months until a new retailer pays back what it cost to acquire.',
+ roi:'Contribution per $ = lifetime contribution (take rate × GMV × contribution margin, over the LTV horizon) from incremental retailers, brands and win-back, per $1 of media. Above 1× the media pays for itself over that horizon.'};
 /* ---------- small builders ---------- */
 const tile=(v,k,cls='',tip='')=>`<div class="tile ${cls}"${tip?` title="${esc(tip)}"`:''}><span class="v">${v}</span><span class="k">${k}</span></div>`;
 // editable number: path = "retailer.firstAOV" etc.; kind: pct (stored 0–1, shown %), m ($M), raw
@@ -79,9 +89,9 @@ function renderGrowth(R){const t=planOf(R),k=t.kpi,P=t.p,best=M.bestSupplyShare(
  <div><div class="eyebrow">${esc(TIERNAME[R.tier])} version · two-sided growth plan</div><h2 style="font-size:20px;margin-top:2px">${money(t.total)} buys ${n0(k.newRetailers)} incremental retailers and ${n0(k.newBrands)} brands</h2>
  <div class="note">Spend comes straight from the media lines in this plan, split by marketplace side. Each channel's platform-reported customers are discounted to incremental ones (lift test where there is one, MMM otherwise), and CAC climbs as spend grows. Supply makes demand cheaper: ${n0(k.newBrands)} new brands on ${n0(P.network.activeBrands)} active lowers retailer CAC by ${pct(1-t.netMult)}.</div></div>
  <div class="tiles">
-  ${tile(n0(k.newRetailers),'Incremental new retailers')}${tile(usd(k.rICAC),'Retailer incremental CAC')}${tile(x1(k.rLtvCac)+' · '+mo(k.rPayback),'Retailer LTV : iCAC · payback',k.rLtvCac<3?'warn':'')}
-  ${tile(n0(k.newBrands),'Incremental new brands')}${tile(usd(k.bICAC),'Brand incremental CAC')}${tile(x1(k.bLtvCac)+' · '+mo(k.bPayback),'Brand LTV : iCAC · payback',k.bLtvCac<3?'warn':'')}
-  ${tile('$'+compact(k.gmvY1),'First-year GMV (incl. win-back, referred retailers)')}${tile(x1(k.roi),'Lifetime contribution per media $',k.roi<1?'warn':'')}${tile((isFinite(k.ratio)?Math.round(k.ratio)+' : 1':'—'),'New retailers per new brand · '+k.balance,k.balance==='balanced'?'':'warn')}
+  ${tile(n0(k.newRetailers),'Incremental new retailers','',TIP.retailers)}${tile(usd(k.rICAC),'Retailer incremental CAC','',TIP.rICAC)}${tile(x1(k.rLtvCac)+' · '+mo(k.rPayback),'Retailer LTV : iCAC · payback',k.rLtvCac<3?'warn':'')}
+  ${tile(n0(k.newBrands),'Incremental new brands','',TIP.brands)}${tile(usd(k.bICAC),'Brand incremental CAC','',TIP.bICAC)}${tile(x1(k.bLtvCac)+' · '+mo(k.bPayback),'Brand LTV : iCAC · payback',k.bLtvCac<3?'warn':'')}
+  ${tile('$'+compact(k.gmvY1),'First-year GMV (incl. win-back, referred retailers)','',TIP.gmv)}${tile(x1(k.roi),'Lifetime contribution per media $',k.roi<1?'warn':'',TIP.roi)}${tile((isFinite(k.ratio)?Math.round(k.ratio)+' : 1':'—'),'New retailers per new brand · '+k.balance,k.balance==='balanced'?'':'warn')}
  </div>
  <div class="cols">
   <div class="mp-card"><h3>Retailer vs brand split</h3><p>You are putting <strong>${pct(cur)}</strong> of acquisition into brands. The split that returns the most lifetime contribution at this budget is <strong>${pct(best.share)}</strong>${Math.abs(best.share-cur)<0.015?', so the split is already close to best.':'.'}</p>
@@ -93,7 +103,7 @@ function renderGrowth(R){const t=planOf(R),k=t.kpi,P=t.p,best=M.bestSupplyShare(
    <li>Win-back returns ${x1(k.wbGMV/Math.max(1,t.winbackBudget))} GMV per $ on incremental reorders only (holdout-read).</li></ul>
    <p class="note">Marginal iCAC = the cost of the last customer, not the average. Shift budget until marginal iCAC ÷ LTV is equal across channels; the Channel Incrementality tab does this for you.</p></div>
  </div>
- <div><h3 style="font-size:14px;margin-bottom:6px">Low vs Medium vs High</h3><div class="tscroll"><table><thead><tr><th>Version</th><th class="n">Budget</th><th class="n">New retailers</th><th class="n">Retailer iCAC</th><th class="n">New brands</th><th class="n">Brand iCAC</th><th class="n">First-year GMV</th><th class="n">Retailer payback</th><th class="n">Contribution per $</th></tr></thead><tbody>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Low vs Medium vs High</h3><div class="tscroll"><table><thead><tr><th>Version</th>${[['Budget','budget'],['New retailers','retailers'],['Retailer iCAC','rICAC'],['New brands','brands'],['Brand iCAC','bICAC'],['First-year GMV','gmv'],['Retailer payback','payback'],['Contribution per $','roi']].map(([n,k])=>`<th class="n"><span class="mp-tip" title="${esc(TIP[k])}">${n}</span></th>`).join('')}</tr></thead><tbody>
   ${tiers.map(x=>`<tr${x.i===R.tier?' class="mp-cur"':''}><td>${TIERNAME[x.i]}</td><td class="n">${money(x.b)}</td><td class="n">${n0(x.k.newRetailers)}</td><td class="n">${usd(x.k.rICAC)}</td><td class="n">${n0(x.k.newBrands)}</td><td class="n">${usd(x.k.bICAC)}</td><td class="n">$${compact(x.k.gmvY1)}</td><td class="n">${mo(x.k.rPayback)}</td><td class="n">${x1(x.k.roi)}</td></tr>`).join('')}</tbody></table></div>
   <div class="note" style="margin-top:6px">Doubling spend never doubles customers: CAC rises on every channel as it scales. Read the gap between versions as the cost of growth.</div></div>
  <div><h3 style="font-size:14px;margin-bottom:6px">Unit economics <span class="sub2">(edit to match your cohorts)</span></h3>
@@ -179,6 +189,47 @@ function renderIntl(R){const t=planOf(R),mm=mkts(),byM=Object.fromEntries(t.mark
 function intlAOA(R){const t=planOf(R);return [['INTERNATIONAL · '+TIERNAME[R.tier]],['Market','Stage','Weight','CAC multiplier','Order size multiplier','Acquisition spend','New retailers','New brands','Retailer iCAC','First-year GMV','Payback (months)'],
  ...t.markets.map(m=>[m.name,m.stage,m.weight,m.cac,m.aov,Math.round(m.spend),Math.round(m.retailers),Math.round(m.brands),Math.round(m.iCAC),Math.round(m.gmvY1),Math.round(m.payback)])]}
 
+
+/* ---------- Setup wizard: what the plan still needs, section by section ---------- */
+// Each step points at a section of the inputs pane (or a tab) and returns what is still missing ('' = done).
+function setupSteps(){const R=compute(UI.tier===3?1:UI.tier),sp=splitOf(),on=S.markets.filter(m=>m.on&&+m.weight>0),P=S.personas||{};
+ const sideHas=k=>R.lines.some(l=>l.side===k),C=S.copy||{},cIni=C.ini||[];
+ const inFlight=m=>m.month&&m.month>=String(S.start).slice(0,7)&&m.month<=String(S.end).slice(0,7);
+ const list=a=>a.filter(Boolean).join(', ');
+ return [
+  ['brief','d-brief','GTM brief',()=>list([!S.name&&'a plan name',!S.product&&'the product',!(S.brief||'').trim()&&'the GTM brief (upload or paste it)'])],
+  ['budget','d-budget','Budget & flight',()=>{const b=TIERS.map(t=>+S.budgets[t]||0);return list([b.some(x=>!(x>0))&&'a budget for Low, Medium and High',b[0]>b[1]||b[1]>b[2]?'Low ≤ Medium ≤ High':'',!(parseD(S.end)>parseD(S.start))&&'flight dates (end after start)'])}],
+  ['markets','d-mkt','Markets',()=>!on.length?'at least one market with a weight':Math.abs(sum(on.map(m=>+m.weight))-100)>1?'market weights add to '+Math.round(sum(on.map(m=>+m.weight)))+'%, not 100%':''],
+  ['audiences','d-aud','Audiences',()=>list([!(P.dm?.on&&P.dm.label)&&'a retailer (demand) audience',!(P.tech?.on&&P.tech.label)&&sp.brand>0&&'a brand (supply) audience',!(P.user?.on&&P.user.label)&&sp.winback>0&&'an existing / lapsed retailer audience for win-back'])],
+  ['initiatives','d-ini','Initiatives & pillars',()=>!S.initiatives.length?'the initiatives and their message pillars':S.initiatives.some(i=>!i.pillar)?'a message pillar for every initiative':sideHas('winback')&&!S.initiatives.some(i=>i.stage==='Conversion')?'a Conversion-stage initiative for the win-back lines':''],
+  ['moments','d-mom','Launch moments',()=>{if(!S.moments.length)return 'market weeks, trade shows, launches or seasons';const n=S.moments.filter(m=>!inFlight(m)).length;return n?n+' moment'+(n>1?'s fall':' falls')+' outside the flight':''}],
+  ['channels','d-ch','Channels',()=>{if(!CH.some(c=>S.channels[c.id]?.on))return 'the channels you will run';return list([!sideHas('retailer')&&'a retailer-acquisition channel',sp.brand>0&&!sideHas('brand')&&'a brand-acquisition channel (LinkedIn, Meta lead ads, search…)',sp.winback>0&&!sideHas('winback')&&'a win-back channel (Retargeting & CRM audiences)'])}],
+  ['volume','d-vol','Creative volume',()=>TIERS.some(t=>!(+S.concepts[t]>0)||!(+S.refresh[t]>0))?'concepts and refresh weeks for every version':''],
+  ['units','d-units','Creative units',()=>{const miss=CH.filter(c=>S.channels[c.id]?.on&&on.some(m=>eligible(c,m))&&!R.lines.some(l=>l.c.id===c.id)).map(c=>c.name);return miss.length?'ad units for '+miss.join(', '):''}],
+  ['copy','d-copy','Messaging & ad copy',()=>{const n=S.initiatives.filter((x,i)=>!(cIni[i]&&linesOf(cIni[i].h).length&&linesOf(cIni[i].b).length)).length;return list([n&&'headlines and body copy for '+n+' initiative'+(n>1?'s':''),!linesOf(C.ctas).length&&'CTAs'])}],
+  ['economics','tab:growth','Unit economics (Growth Plan)',()=>S.name!==EX_NAME&&!mp().retailer?'your own AOV, reorder and take rates (still on planning defaults)':'']
+ ].map(([id,card,label,f])=>({id,card,label,gap:f()}))}
+function wizardHtml(compact){const st=setupSteps(),done=st.filter(x=>!x.gap).length,next=st.find(x=>x.gap),su=S.setup||{},qs=(su.missing||[]).map((m,i)=>({...m,i})).filter(m=>!m.done);
+ const head=`<div class="wz-head"><b>${done} of ${st.length} ready</b><div class="wz-bar"><i style="width:${(done/st.length*100).toFixed(1)}%"></i></div></div>`;
+ const nextBox=next?`<div class="wz-next"><span class="wz-k">Next</span><b>${esc(next.label)}</b><span>Needs ${esc(next.gap)}.</span>${qs.filter(m=>m.step===next.id).slice(0,2).map(m=>`<span class="note">${esc(su.how||'The AI')} asks: ${esc(m.question)}</span>`).join('')}<button type="button" class="btn sm primary" data-wz-open="${next.card}">Open ${esc(next.label)}</button></div>`:'<div class="wz-next ok"><b>Every section has what it needs.</b></div>';
+ if(compact)return head+nextBox;
+ const lst=`<ol class="wz-list">${st.map(x=>`<li class="${x.gap?'':'ok'}"><button type="button" class="lnk" data-wz-open="${x.card}">${esc(x.label)}</button>${x.gap?`<span>${esc(x.gap)}</span>`:''}</li>`).join('')}</ol>`;
+ const ask=qs.length?`<div class="wz-qs"><b>Questions from ${esc(su.how||'the AI')}</b><p class="note">Answer what you can, then send. It re-reads the brief with your answers and refills the inputs.</p>${qs.map(m=>`<label class="f">${esc(m.question)}<input type="text" data-wz-q="${m.i}" value="${esc(m.answer||'')}"></label>`).join('')}<div class="btns"><button type="button" class="btn sm primary" id="btn-wz-send">Send answers</button><button type="button" class="lnk" id="btn-wz-clear">Dismiss questions</button></div></div>`:'';
+ const assumed=(su.assumed||[]).length?`<div class="wz-sub"><b>What ${esc(su.how||'the AI')} assumed</b><ul class="wz-as">${su.assumed.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`:'';
+ const from=su.at?`<p class="note">Filled from the brief by ${esc(su.how||'the AI')} on ${esc(su.at)}.</p>`:'';
+ return `<div class="wz-title">Setup checklist</div>`+head+from+nextBox+ask+assumed+lst}
+function renderWizard(){const w=$('#setup-wizard');if(!w)return;if(w.contains(document.activeElement)&&document.activeElement.dataset.wzQ!=null)return;w.innerHTML=wizardHtml(false)}
+function openStep(card){if(card.startsWith('tab:')){UI.tab=card.slice(4);if(UI.tier===3)UI.tier=1;save();renderOut();$('#view').scrollIntoView({behavior:'smooth',block:'start'});return}
+ const d=document.getElementById(card);if(!d)return;d.open=true;if(innerWidth<=980&&$('.rail'))$('.rail').scrollIntoView();d.scrollIntoView({behavior:'smooth',block:'start'});d.classList.remove('wz-flash');void d.offsetWidth;d.classList.add('wz-flash');
+ const f=d.querySelector('input:not([type=checkbox]):not([type=hidden]),textarea,select');if(f)setTimeout(()=>f.focus({preventScroll:true}),350)}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-wz-open]');if(b){e.preventDefault();openStep(b.dataset.wzOpen);return}
+ if(e.target.id==='btn-wz-send'){const a=(S.setup?.missing||[]).filter(m=>!m.done&&(m.answer||'').trim());if(!a.length)return setStatus('#extract-status','Answer at least one question first.',true);
+  if(typeof window.runExtractFor!=='function')return;window.runExtractFor(a.map(m=>'Q: '+m.question+'\nA: '+m.answer).join('\n\n'))}
+ if(e.target.id==='btn-wz-clear'){(S.setup?.missing||[]).forEach(m=>m.done=true);save();renderWizard()}});
+document.addEventListener('input',e=>{const i=e.target.dataset&&e.target.dataset.wzQ;if(i==null||!S.setup)return;S.setup.missing[+i].answer=e.target.value;save()});
+// the inputs pane changes without a re-render of the plan on some fields: refresh the checklist after any edit there
+document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('.rail')&&!e.target.closest('#setup-wizard'))setTimeout(renderWizard,150)});
+
 window.MP_TABS={mpmix:renderMix,winback:renderWinback,intl:renderIntl};
 window.MP_AOA={mpmix:mixAOA,winback:wbAOA,intl:intlAOA};
 window.MP_NAMES={mpmix:'Channel Incrementality',winback:'Win-back',intl:'International'};
@@ -206,7 +257,9 @@ function wireSplit(){const b=$('#sp-brand'),w=$('#sp-wb');if(!b)return;
  b.oninput=live;w.oninput=live;b.onchange=w.onchange=()=>{live();changed()};
  $('#sp-reset').onclick=()=>{S.split={...SPLIT_DEF};syncSplit();changed()};syncSplit()}
 if(!S.split)S.split={...SPLIT_DEF};
-const _renderOut=window.renderOut;window.renderOut=function(){_renderOut();syncSplit()};
+const _renderOut=window.renderOut;window.renderOut=function(){_renderOut();syncSplit();renderWizard();
+ // on the Summary, a compact "finish setting up" box until every section is ready (not on the example)
+ if(UI.tier!==3&&UI.tab==='summary'&&S.name!==EX_NAME&&setupSteps().some(x=>x.gap)){const p=$('#view .panel');if(p)p.insertAdjacentHTML('afterbegin',`<div class="wz-op">${'<h3 style="font-size:14px;margin:0">Finish setting up the plan</h3>'+wizardHtml(true)}</div>`)}};
 
 /* ---------- PDF export: every tab, landscape A4 ---------- */
 const LIBS=['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];

@@ -54,6 +54,7 @@
           <div class="btns linkrow"><button class="lnk" id="btn-extract">Fill again from this text</button><span class="sub2">·</span><button class="lnk" id="btn-reset">Reload example</button><span class="sub2">·</span><button class="lnk" id="btn-blank">Start blank</button></div>
           <div class="status" id="extract-status" role="status"></div>
           <div class="note">Uploading or pasting the doc asks the AI agent to read the brief and set markets, personas, initiatives, launch moments and channels. Everything stays editable below.</div>
+          <div class="wz" id="setup-wizard" aria-live="polite"></div>
           <details class="agent" id="d-agent">
             <summary>AI agent <span class="chip" id="agent-chip">Not connected</span></summary>
             <div class="agent-body">
@@ -69,7 +70,7 @@
         </div>
       </details>
 
-      <details open>
+      <details id="d-budget" open>
         <summary>2 · Budget &amp; flight <span class="hint">per version</span></summary>
         <div class="sec">
           <div class="row3">
@@ -91,7 +92,7 @@
         </div>
       </details>
 
-      <details open>
+      <details id="d-mkt" open>
         <summary>3 · Markets <span class="hint">weight % · budget · language</span></summary>
         <div class="sec">
           <div class="list" id="mkt-list"></div>
@@ -101,20 +102,20 @@
         </div>
       </details>
 
-      <details>
+      <details id="d-aud">
         <summary>4 · Audiences <span class="hint">personas</span></summary>
         <div class="sec"><div class="list" id="per-list"></div>
           <div class="note">The first three drive targeting by channel; rename them to match your doc. Audiences you add apply to every channel. Type in the blank row to add one.</div></div>
       </details>
 
-      <details>
+      <details id="d-ini">
         <summary>5 · Initiatives &amp; pillars</summary>
         <div class="sec"><div class="list" id="ini-list"></div>
           <div class="btns"><button class="btn sm" id="add-ini">Add initiative</button></div>
           <div class="note">Filled from the GTM doc. Each placement uses the initiative whose funnel stage matches its own.</div></div>
       </details>
 
-      <details>
+      <details id="d-mom">
         <summary>6 · Launch moments <span class="hint">drive bursts</span></summary>
         <div class="sec"><div class="list" id="mom-list"></div>
           <div class="btns"><button class="btn sm" id="add-mom">Add moment</button></div>
@@ -122,7 +123,7 @@
           <div class="note">Launches and content drops add weight to that month and the next. Events pull event-amplification spend into their months.</div></div>
       </details>
 
-      <details>
+      <details id="d-ch">
         <summary>7 · Channels <span class="hint">on · budget per version</span></summary>
         <div class="sec"><div class="list" id="ch-list"></div>
           <div class="bud-tot" id="ch-tot"></div><div class="status" id="ch-status" role="status"></div>
@@ -130,7 +131,7 @@
           <div class="note">Type a dollar amount for any channel and version and it stays exactly as typed (shown in bold). The checked channels you leave blank split the rest of that version’s budget. Auto-fill clears what you typed and splits each version’s budget using the recommended mix. Each channel only runs in the markets that fit it: search, Meta, TikTok, Pinterest, YouTube, LinkedIn, Reddit and retargeting everywhere except China; CTV, partners, newsletters and podcasts in North America, Europe and Australia; WeChat and Baidu in China; Naver in Korea. Every placement belongs to one marketplace side (retailers, brands or win-back), and the split in section 2 sets how much each side gets.</div></div>
       </details>
 
-      <details>
+      <details id="d-vol">
         <summary>8 · Creative volume</summary>
         <div class="sec">
           <div class="eyebrow">Concepts per placement</div>
@@ -148,7 +149,7 @@
         </div>
       </details>
 
-      <details>
+      <details id="d-units">
         <summary>9 · Creative units <span class="hint">by platform · specs</span></summary>
         <div class="sec">
           <div class="btns"><button class="btn sm" id="un-open">Expand / collapse all</button><button class="btn sm" id="un-all">Select all</button><button class="btn sm" id="un-none">Clear all</button></div>
@@ -159,7 +160,7 @@
         </div>
       </details>
 
-      <details open>
+      <details id="d-copy" open>
         <summary>10 · Messaging &amp; ad copy <span class="hint">fills the BOM</span></summary>
         <div class="sec">
           <div class="note" id="cp-src"></div>
