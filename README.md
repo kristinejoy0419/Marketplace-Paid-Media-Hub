@@ -1,62 +1,45 @@
 # Marketplace Paid Media Hub
 
-A paid media planning tool for a two-sided wholesale marketplace, where independent retailers buy and brands sell. It plans both sides of acquisition and judges every dollar on **incremental** customers, GMV and lifetime contribution, not on platform-reported conversions.
+The Paid Media Hub, rebuilt for a two-sided wholesale marketplace where independent retailers buy and independent brands sell. It starts from a GTM brief, like the original hub, and turns it into a full paid media plan: line items, BOM, spec sheets, flighting, buy details, a test plan and agency tagging. On top of that it plans both sides of the marketplace and judges spend on **incremental** customers, GMV and lifetime contribution.
 
-The example plan is built around a wholesale marketplace like Faire. **Every number in it is an illustrative assumption, not company data.** Replace the inputs with real cohort, MMM and lift data before using the output in a decision.
+The example plan is a Faire-style wholesale marketplace. **Every number in it is an illustrative assumption, not company data.**
 
-## What it does
+## Inputs (left pane)
 
-The **input pane** on the left holds the plan settings: budget versions and splits, market weights, retailer and brand unit economics, and marketplace dynamics. The tabs on the right show results. Channel, MMM/lift and win-back inputs stay in their own tables.
+The same ten sections as the original hub:
 
-| Tab | What it answers |
+1. **GTM brief**: upload a PDF, DOCX or TXT (or paste text); an AI agent, or a rules-based fallback, fills the inputs below.
+2. **Budget & flight**: Low, Medium and High budgets ($20M, $50M and $100M by default) and flight dates, plus the **marketplace split**: the brand (supply) share of acquisition and the retargeting & win-back share of total. The default is 20% brands and 10% win-back, based on the JD. Every media line is rescaled to land on the split.
+3. **Markets**: weights, budgets and languages (North America, Europe & UK, Australia & NZ by default).
+4. **Audiences**: retailers (demand), brands (supply), and existing & lapsed retailers.
+5. **Initiatives & pillars**: retailer awareness, retailer first order, win-back & reorders, brand acquisition, brand awareness.
+6. **Launch moments**: market weeks, trade shows, win-back waves, holiday ordering.
+7. **Channels**: search & PMax, Meta, TikTok, Pinterest, YouTube, CTV, LinkedIn, Reddit, partners & affiliates, newsletters & creators, retail trade press, trade shows, retargeting & CRM audiences (WeChat, Baidu and Naver are available but off). Every placement belongs to one side: retailers, brands or win-back.
+8. **Creative volume**, 9. **Creative units** (now including PMax, Advantage+ catalog, TikTok, Pinterest, CTV and partner kits) and 10. **Messaging & ad copy**.
+
+## Tabs
+
+| Tab | What it shows |
 | --- | --- |
-| **Summary** | What the budget buys: incremental retailers and brands, first-year GMV, incremental CAC, LTV:CAC, payback, marketplace balance, and where the next $1M should go. |
-| **Channel mix** | Spend, CAC at spend, attributed vs incremental customers, and marginal incremental CAC per channel, for each side. One click rebalances a side so every channel's marginal iCAC is equal. |
-| **Retargeting & win-back** | Paid media against signed-up-but-not-ordered, no-reorder, lapsed, abandoned-cart and dormant-brand segments, measured against a standing holdout. |
-| **Measurement** | MMM and lift reads per channel, which one the plan uses, where they disagree, the test calendar and the weekly/monthly/quarterly operating rhythm. |
-| **International** | Spend, customers, iCAC, GMV and payback by market, with a Test → Scaling → Core launch sequence. |
-| **Unit economics** | Retailer and brand lifetime value year by year, the supply-depth network effect and the balance band. |
+| **Paid Media Summary** | Budget by marketplace side, channel, market, stage and initiative; incremental retailers and brands, GMV, network balance and LTV : iCAC. |
+| **Growth Plan** | The two-sided plan: incremental CAC and LTV on each side, network effect, the best supply share, where the next $1M goes, Low vs Medium vs High, editable unit economics. |
+| **Channel Incrementality** | Per channel and side: platform CAC, MMM / lift reads, incremental customers, iCAC, marginal iCAC, and the mix that equalizes marginal returns. |
+| **Retargeting & Win-back** | Holdout-read win-back segments and the win-back media lines. |
+| **International** | Spend, customers, iCAC, GMV and payback by market, plus a launch checklist. |
+| **BOM**, **Spec Sheet for Creative Studio**, **Assets**, **Flighting & Projected Outcomes**, **Buy Details**, **Test Plan**, **Spec Sheet & Tagging for Agency** | The original hub tabs, with marketplace channels, funnel (sign-up → approved → first order → repeat), tests and tags. |
 
-**Download PDF** saves every tab as a landscape A4 PDF in the light theme (it loads html2canvas and jsPDF from cdnjs on first use). **Copy plan as CSV** copies the channel and win-back lines for a spreadsheet.
+Exports: **Download PDF** (every tab, landscape A4), **.xlsx** (this version or all three, including the marketplace tabs), CSV and copy for any tab. Plans save in the browser under Projects, with JSON backups.
 
-The input pane sets the budget version ($20M, $50M or $100M by default), the brand (supply) share of acquisition and the win-back share. The Summary tab also scans for the brand share that returns the most lifetime contribution.
+## How the marketplace model works (js/model.js)
 
-## How the model works
-
-- **Diminishing returns:** CAC at spend = base CAC × (spend ÷ reference spend) ^ elasticity.
-- **Incrementality:** incremental customers = attributed × incrementality factor. A lift or geo test read overrides the MMM read when one exists.
-- **Marginal iCAC** = iCAC ÷ (1 − elasticity), the cost of the next incremental customer. The rebalancer allocates budget in small steps to the lowest marginal iCAC, capped at 3× each channel's reference spend.
-- **Retailer LTV:** first order plus repeat orders in year 1, then retention × growth each later year; net revenue at first-order and repeat take rates; contribution at the margin you set.
-- **Brand LTV:** contribution on the share of a new brand's GMV that is net new to the marketplace, plus credit for the retailers each brand brings from its own book.
-- **Network effect:** new brands deepen the catalog, which lowers retailer CAC by (1 + new brands ÷ active brands) ^ −strength.
-- **Win-back:** reach saturates exponentially with spend; only reactivations above the holdout rate count.
-
-All of the model lives in `js/model.js` as pure functions with no DOM, so it can be tested and reused.
+- CAC at spend = base CAC × (spend ÷ reference spend) ^ elasticity; incremental = attributed × incrementality (a lift test read overrides MMM).
+- Marginal iCAC = iCAC ÷ (1 − elasticity). The rebalancer moves budget to the lowest marginal iCAC, capped at 3× reference spend.
+- Retailer LTV from first and repeat orders, retention and take rates; brand LTV from net-new GMV plus the retailers each brand brings.
+- Network effect: new brands relative to the active base lower retailer CAC; a balance band flags supply-heavy or demand-heavy plans.
+- Win-back: reach saturates with spend, and only exposed − holdout orders count.
 
 ## Run it
 
-Open `index.html` in a browser. No build step and no dependencies. Inputs save in that browser.
+Open `index.html` in a browser, or the GitHub Pages site. `npm test` runs the model tests; `npm run build` writes a single-file `dist/hub.html`.
 
-`dist/hub.html` is the same tool as one self-contained file for sharing. Rebuild it after changes with:
-
-```sh
-npm run build
-```
-
-Run the model tests (Node 18+):
-
-```sh
-npm test
-```
-
-## Files
-
-```
-index.html            page shell
-css/styles.css        styles, light and dark themes
-js/model.js           the planning model (browser + Node)
-js/app.js             tabs, inputs, rendering
-test/model.test.js    model tests
-img/spider.webp       the spider
-scripts/build-single.js  builds dist/hub.html
-```
+Files: `js/hub.js` (the original hub with marketplace data), `js/marketplace.js` (split sliders, marketplace tabs, PDF), `js/model.js`, `css/hub.css`, `css/marketplace.css`.
