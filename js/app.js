@@ -27,12 +27,12 @@
 
   // An editable number bound to a path in S. scale 100 shows a share as a percent.
   function inp(path, opts) {
-    const o = Object.assign({ scale: 1, dp: 0, cls: '' }, opts || {});
+    const o = Object.assign({ scale: 1, dp: 0, cls: '', idp: 'in-' }, opts || {});
     const raw = getPath(S, path);
     const shown = raw == null ? '' : +(raw * o.scale).toFixed(o.dp + 2);
-    return `<input type="text" inputmode="decimal" id="in-${path.replace(/\./g, '-')}" data-path="${path}" data-scale="${o.scale}"${o.blank ? ' data-blank="1"' : ''} value="${shown}" class="${o.cls}" aria-label="${esc(o.label || path)}" placeholder="${o.blank ? '—' : ''}">`;
+    return `<input type="text" inputmode="decimal" id="${o.idp}${path.replace(/\./g, '-')}" data-path="${path}" data-scale="${o.scale}"${o.blank ? ' data-blank="1"' : ''} value="${shown}" class="${o.cls}" aria-label="${esc(o.label || path)}" placeholder="${o.blank ? '—' : ''}">`;
   }
-  const field = (label, path, unit, opts) => `<div class="field"><label for="in-${path.replace(/\./g, '-')}">${label}</label>${inp(path, Object.assign({ label }, opts))}<span class="u">${unit || ''}</span></div>`;
+  const field = (label, path, unit, opts) => `<div class="field"><label for="${(opts && opts.idp) || 'in-'}${path.replace(/\./g, '-')}">${label}</label>${inp(path, Object.assign({ label }, opts))}<span class="u">${unit || ''}</span></div>`;
   const ltvChip = r => r >= 3 ? 'good' : r >= 1.5 ? 'warn' : 'bad';
   const payChip = m => m <= 12 ? 'good' : m <= 24 ? 'warn' : 'bad';
   const sideChip = s => `<span class="chip ${s}">${s === 'retailer' ? 'Retailer' : 'Brand'}</span>`;
@@ -80,7 +80,7 @@
           <span class="eyebrow">Marketplace balance</span>
           <h3>New retailers per new brand: ${fin(k.ratio) ? k.ratio.toFixed(1) : '—'}</h3>
           ${meter(k.ratio, S.balance)}
-          <p class="note">The ratio is ${balTxt}. The band (${S.balance.min} to ${S.balance.max}) is set on Unit economics. Each new brand also brings ${S.brand.referredRetailers} retailers from its own book and makes retailer acquisition ${pct(1 - t.netMult, 1)} cheaper through catalog depth.</p>
+          <p class="note">The ratio is ${balTxt}. The band (${S.balance.min} to ${S.balance.max}) is set under Marketplace dynamics in the input pane. Each new brand also brings ${S.brand.referredRetailers} retailers from its own book and makes retailer acquisition ${pct(1 - t.netMult, 1)} cheaper through catalog depth.</p>
           <div class="row"><span class="hint">Best brand share at these assumptions: <b>${pct(best.share)}</b></span>${Math.abs(best.share - S.supplyShare) > 0.005 ? `<button class="btn sm" type="button" data-act="best-share">Use ${pct(best.share)}</button>` : '<span class="chip good">Already there</span>'}</div>
         </section>
         <section class="panel">
@@ -228,7 +228,7 @@
       <section class="panel"><span class="eyebrow">Operating rhythm</span><h3>How the numbers are used</h3><ul class="plain">
         <li><b>Weekly:</b> pacing and bids on platform data and MTA paths. Fast and directional; never used to set budgets.</li>
         <li><b>Monthly:</b> MMM refresh (Bayesian, weekly grain, by side and market) with lift results as priors. Budget moves when marginal iCAC differs across channels by more than 20%.</li>
-        <li><b>Quarterly:</b> cohort LTV true-up. Reorder rate and take rate from the last four cohorts replace the planning assumptions on Unit economics.</li>
+        <li><b>Quarterly:</b> cohort LTV true-up. Reorder rate and take rate from the last four cohorts replace the planning assumptions in the input pane.</li>
         <li><b>Guardrails:</b> no channel scales past 3× its reference spend without a lift read; any channel whose reads disagree is held flat until retested.</li>
         <li><b>AI in the workflow:</b> automated anomaly alerts on pacing and CAC, creative variant generation for localization, and an agent that drafts the weekly readout from MMM and platform pulls for a human to edit.</li></ul></section>
     </div>`;
@@ -239,14 +239,12 @@
     return `<section class="panel">
       <span class="eyebrow">Market mix</span>
       <h2>Where acquisition dollars go by market</h2>
-      <p class="note">Weight sets each market's share of acquisition spend. The CAC multiplier compares local cost per customer with the US; the order-size multiplier converts local GMV to USD. Customers split by weight ÷ CAC multiplier.</p>
+      <p class="note">Set weights and multipliers under Markets in the input pane. Weight sets each market's share of acquisition spend. The CAC multiplier compares local cost per customer with the US; the order-size multiplier converts local GMV to USD. Customers split by weight ÷ CAC multiplier.</p>
       <div class="tw"><table>
         <thead><tr><th>Market</th><th>Stage</th><th class="r">Weight %</th><th class="r">CAC ×</th><th class="r">Order size ×</th><th class="r">Spend</th><th class="r">New retailers</th><th class="r">New brands</th><th class="r">Retailer iCAC</th><th class="r">Y1 GMV</th><th class="r">Payback</th><th>Local plan</th></tr></thead>
         <tbody>${t.markets.map((m, i) => `<tr><td><b>${esc(m.name)}</b></td>
           <td><select id="in-markets-${i}-stage" data-path="markets.${i}.stage" aria-label="${esc(m.name)} stage">${['Core', 'Scaling', 'Test'].map(s => `<option${s === m.stage ? ' selected' : ''}>${s}</option>`).join('')}</select></td>
-          <td class="r">${inp(`markets.${i}.weight`, { scale: 100, label: m.name + ' weight' })}</td>
-          <td class="r">${inp(`markets.${i}.cac`, { dp: 2, label: m.name + ' CAC multiplier' })}</td>
-          <td class="r">${inp(`markets.${i}.aov`, { dp: 2, label: m.name + ' order size multiplier' })}</td>
+          <td class="r">${pct(m.weight)}</td><td class="r">${x(m.cac, 2)}</td><td class="r">${x(m.aov, 2)}</td>
           <td class="r">${money(m.spend)}</td><td class="r">${int(m.retailers)}</td><td class="r">${int(m.brands)}</td><td class="r">${usd(m.iCAC)}</td>
           <td class="r">${money(m.gmvY1)}</td><td class="r"><span class="chip ${payChip(m.payback)}">${mo(m.payback)}</span></td><td>${esc(m.note)}</td></tr>`).join('')}
           <tr class="tot"><td>Total</td><td></td><td class="r ${Math.abs(tot.w - 1) > 0.001 ? 'dn' : ''}">${pct(tot.w)}</td><td class="r">${x(t.marketCAC, 2)}</td><td></td><td class="r">${money(tot.spend)}</td><td class="r">${int(tot.r)}</td><td class="r">${int(tot.b)}</td><td class="r">${usd(tot.spend * (1 - S.supplyShare) / tot.r)}</td><td class="r">${money(tot.g)}</td><td></td><td></td></tr>
@@ -262,42 +260,78 @@
   V.economics = t => {
     const R = t.R, B = t.B;
     return `<div class="grid2 even">
-      <section class="panel"><span class="eyebrow">Demand side</span><h3>Retailer unit economics</h3>
-        <div class="fields">
-          ${field('First order size', 'retailer.firstAOV', '$')}${field('Repeat order size', 'retailer.repeatAOV', '$')}
-          ${field('Reorder within 12 months', 'retailer.reorder12', '%', { scale: 100 })}${field('Repeat orders in year 1', 'retailer.repeatOrders', '', { dp: 1 })}
-          ${field('Yearly retention after year 1', 'retailer.retention', '%', { scale: 100 })}${field('Order growth per retained retailer', 'retailer.growth', '×', { dp: 2 })}
-          ${field('Take rate, first order', 'retailer.takeFirst', '%', { scale: 100, dp: 1 })}${field('Take rate, repeat orders', 'retailer.takeRepeat', '%', { scale: 100, dp: 1 })}
-          ${field('Contribution margin on net revenue', 'retailer.margin', '%', { scale: 100 })}${field('LTV horizon', 'retailer.years', 'yrs')}
-        </div>
+      <section class="panel"><span class="eyebrow">Demand side</span><h3>Retailer lifetime value</h3>
         <div class="tw"><table><thead><tr><th>Year</th><th class="r">GMV per retailer</th><th class="r">Net revenue</th><th class="r">Contribution</th></tr></thead><tbody>
           ${R.years.map((y, i) => `<tr><td>Year ${i + 1}</td><td class="r">${usd(y.gmv)}</td><td class="r">${usd(y.net)}</td><td class="r">${usd(y.net * S.retailer.margin)}</td></tr>`).join('')}
           <tr class="tot"><td>Lifetime</td><td class="r">${usd(R.gmvLife)}</td><td></td><td class="r">${usd(R.ltv)}</td></tr></tbody></table></div>
+        <p class="note">Year 1 is the first order plus ${pct(S.retailer.reorder12)} reordering ${S.retailer.repeatOrders} times. Later years apply ${pct(S.retailer.retention)} retention and ${x(S.retailer.growth, 2)} order growth. Net revenue uses the ${pct(S.retailer.takeFirst, 1)} first-order and ${pct(S.retailer.takeRepeat, 1)} repeat take rates.</p>
       </section>
-      <section class="panel"><span class="eyebrow">Supply side</span><h3>Brand unit economics</h3>
-        <div class="fields">
-          ${field('Year-1 GMV per new brand', 'brand.gmvY1', '$', { cls: 'w' })}${field('Share of that GMV net new to the marketplace', 'brand.incrShare', '%', { scale: 100 })}
-          ${field('Take rate', 'brand.take', '%', { scale: 100, dp: 1 })}${field('Yearly brand retention', 'brand.retention', '%', { scale: 100 })}
-          ${field('GMV growth per retained brand', 'brand.growth', '×', { dp: 2 })}${field('Retailers each brand brings', 'brand.referredRetailers', '', { dp: 2 })}
-          ${field('Share of referred retailer LTV credited', 'brand.referredValue', '%', { scale: 100 })}
-        </div>
+      <section class="panel"><span class="eyebrow">Supply side</span><h3>Brand lifetime value</h3>
         <div class="tw"><table><tbody>
+          <tr><td>Year-1 GMV per new brand</td><td class="r">${usd(B.gmvY1)}</td></tr>
+          <tr><td>Net new to the marketplace</td><td class="r">${usd(B.gmvY1 * S.brand.incrShare)}</td></tr>
           <tr><td>Year-1 contribution per brand</td><td class="r">${usd(B.contribY1)}</td></tr>
           <tr><td>Referred-retailer value per brand</td><td class="r">${usd(B.referred)}</td></tr>
           <tr class="tot"><td>Brand LTV (${S.retailer.years} years)</td><td class="r">${usd(B.ltv)}</td></tr></tbody></table></div>
+        <p class="note">Only the share of a new brand's GMV that is net new counts, so the plan does not credit brand acquisition for orders that would have gone to another brand.</p>
       </section>
     </div>
     <div class="grid2 even">
       <section class="panel"><span class="eyebrow">Network effect</span><h3>Supply depth lowers retailer CAC</h3>
-        <div class="fields">${field('Active brands today', 'network.activeBrands', '', { cls: 'w' })}${field('Effect strength', 'network.effect', '', { dp: 2 })}</div>
-        <p class="note">Retailer CAC × (1 + new brands ÷ active brands) ^ −strength. This plan's ${int(t.kpi.newBrands)} new brands make retailer CAC ${pct(1 - t.netMult, 1)} lower. Set strength to 0 to switch the effect off.</p></section>
-      <section class="panel"><span class="eyebrow">Balance band</span><h3>Healthy new retailers per new brand</h3>
-        <div class="fields">${field('Lower bound', 'balance.min', '')}${field('Upper bound', 'balance.max', '')}</div>
+        <p class="note">Retailer CAC × (1 + new brands ÷ active brands) ^ −strength. This plan's ${int(t.kpi.newBrands)} new brands against ${int(S.network.activeBrands)} active brands make retailer CAC ${pct(1 - t.netMult, 1)} lower. Set strength to 0 to switch the effect off.</p></section>
+      <section class="panel"><span class="eyebrow">Balance band</span><h3>Healthy new retailers per new brand: ${S.balance.min} to ${S.balance.max}</h3>
         <p class="note">Below the band, new brands wait for orders and churn. Above it, retailers find a thin catalog and conversion falls. Set it from historical cohort data on fill rate and first-order conversion.</p></section>
-    </div>
-    <section class="panel"><span class="eyebrow">Budget versions</span><h3>Annual paid media budget</h3>
-      <div class="fields">${field('Low', 'budgets.low', '$', { cls: 'w' })}${field('Medium', 'budgets.medium', '$', { cls: 'w' })}${field('High', 'budgets.high', '$', { cls: 'w' })}</div></section>`;
+    </div>`;
   };
+
+  // ---------- input pane ----------
+  // Built once (and again on reset), so typing in it never loses focus. render() refreshes its live hints.
+  function renderRail() {
+    const f = (label, path, unit, opts) => field(label, path, unit, Object.assign({ idp: 'rl-' }, opts));
+    $('rail').innerHTML = `
+      <details open><summary>1 · Budget &amp; split <span class="hint">per year</span></summary><div class="sec">
+        <span class="eyebrow">Version</span>
+        <div class="seg" role="group" aria-label="Budget version" id="ver-seg"></div>
+        <div class="fields one">${f('Low', 'budgets.low', '$M', { scale: 1e-6, dp: 1 })}${f('Medium', 'budgets.medium', '$M', { scale: 1e-6, dp: 1 })}${f('High', 'budgets.high', '$M', { scale: 1e-6, dp: 1 })}</div>
+        <label class="eyebrow" for="supply">Brand (supply) share of acquisition</label>
+        <div class="slide"><input type="range" id="supply" min="5" max="40" step="1"><output id="supply-o"></output></div>
+        <span class="hint" id="supply-hint"></span>
+        <label class="eyebrow" for="winback">Retargeting &amp; win-back share</label>
+        <div class="slide"><input type="range" id="winback" min="0" max="25" step="1"><output id="winback-o"></output></div>
+        <span class="hint" id="winback-hint"></span>
+      </div></details>
+      <details open><summary>2 · Markets <span class="hint">weight · CAC · order size</span></summary><div class="sec">
+        <div class="mkt head"><span>Market</span><span>Weight %</span><span>CAC ×</span><span>Order ×</span></div>
+        ${S.markets.map((m, i) => `<div class="mkt"><span>${esc(m.name)}</span>${inp(`markets.${i}.weight`, { scale: 100, idp: 'rl-', label: m.name + ' weight %' })}${inp(`markets.${i}.cac`, { dp: 2, idp: 'rl-', label: m.name + ' CAC multiplier' })}${inp(`markets.${i}.aov`, { dp: 2, idp: 'rl-', label: m.name + ' order size multiplier' })}</div>`).join('')}
+        <span class="hint" id="mkt-tot"></span>
+      </div></details>
+      <details><summary>3 · Retailer economics <span class="hint">demand side</span></summary><div class="sec"><div class="fields one">
+        ${f('First order size', 'retailer.firstAOV', '$')}${f('Repeat order size', 'retailer.repeatAOV', '$')}
+        ${f('Reorder within 12 months', 'retailer.reorder12', '%', { scale: 100 })}${f('Repeat orders in year 1', 'retailer.repeatOrders', '', { dp: 1 })}
+        ${f('Yearly retention after year 1', 'retailer.retention', '%', { scale: 100 })}${f('Order growth per retained retailer', 'retailer.growth', '×', { dp: 2 })}
+        ${f('Take rate, first order', 'retailer.takeFirst', '%', { scale: 100, dp: 1 })}${f('Take rate, repeat orders', 'retailer.takeRepeat', '%', { scale: 100, dp: 1 })}
+        ${f('Contribution margin on net revenue', 'retailer.margin', '%', { scale: 100 })}${f('LTV horizon', 'retailer.years', 'yrs')}
+      </div><span class="hint" id="r-ltv"></span></div></details>
+      <details><summary>4 · Brand economics <span class="hint">supply side</span></summary><div class="sec"><div class="fields one">
+        ${f('Year-1 GMV per new brand', 'brand.gmvY1', '$', { cls: 'w' })}${f('Share of GMV net new to the marketplace', 'brand.incrShare', '%', { scale: 100 })}
+        ${f('Take rate', 'brand.take', '%', { scale: 100, dp: 1 })}${f('Yearly brand retention', 'brand.retention', '%', { scale: 100 })}
+        ${f('GMV growth per retained brand', 'brand.growth', '×', { dp: 2 })}${f('Retailers each brand brings', 'brand.referredRetailers', '', { dp: 2 })}
+        ${f('Share of referred retailer LTV credited', 'brand.referredValue', '%', { scale: 100 })}
+      </div><span class="hint" id="b-ltv"></span></div></details>
+      <details><summary>5 · Marketplace dynamics <span class="hint">network · balance</span></summary><div class="sec"><div class="fields one">
+        ${f('Active brands today', 'network.activeBrands', '', { cls: 'w' })}${f('Network effect strength', 'network.effect', '', { dp: 2 })}
+        ${f('Balance band, low', 'balance.min', '')}${f('Balance band, high', 'balance.max', '')}
+      </div><p class="note">Balance is new retailers per new brand. The band sets the green zone on Summary.</p></div></details>
+      <details><summary>6 · Channels &amp; win-back</summary><div class="sec">
+        <p class="note">Channel mix, base CAC and elasticity are edited in the <a href="#channels">Channel mix</a> table. MMM and lift reads are on <a href="#measurement">Measurement</a>, and segment inputs are on <a href="#winback">Retargeting &amp; win-back</a>.</p>
+      </div></details>
+      <div class="sec actions">
+        <button class="btn" id="pdf" type="button">Download PDF</button>
+        <button class="btn ghost" id="copy-csv" type="button">Copy plan as CSV</button>
+        <button class="btn ghost" id="reset" type="button">Reset to example</button>
+        <p class="note">Every change saves in this browser on its own.</p>
+      </div>`;
+  }
 
   // ---------- render ----------
   function render() {
@@ -307,6 +341,10 @@
     $('supply-hint').textContent = `Brands ${money(t.sideBudget.brand)} · Retailers ${money(t.sideBudget.retailer)}`;
     $('winback').value = Math.round(S.winbackShare * 100); $('winback-o').textContent = pct(S.winbackShare);
     $('winback-hint').textContent = `${money(t.winbackBudget)} against people who already know the marketplace`;
+    const mw = S.markets.reduce((a, m) => a + m.weight, 0);
+    $('mkt-tot').textContent = `Weights add to ${pct(mw)}${Math.abs(mw - 1) > 0.001 ? ', so they are read relative to each other' : ''}. Blended CAC ${x(t.marketCAC, 2)} the US.`;
+    $('r-ltv').textContent = `Retailer LTV ${usd(t.R.ltv)} · year-1 GMV ${usd(t.R.gmvY1)}`;
+    $('b-ltv').textContent = `Brand LTV ${usd(t.B.ltv)}`;
     $('tabs').innerHTML = TABS.map(([id, label]) => `<a href="#${id}" role="tab" id="tab-${id}" aria-selected="${tab === id}" aria-controls="view">${label}</a>`).join('');
 
     // Keep whatever the person is typing exactly as typed across the redraw.
@@ -346,7 +384,7 @@
     } else if (act === 'best-share') {
       S.supplyShare = M.bestSupplyShare(S).share; render(); flash(`Brand share set to ${pct(S.supplyShare)}.`);
     } else if (act === 'reset') {
-      if (b.dataset.armed) { S = M.clone(M.DEFAULTS); delete b.dataset.armed; b.textContent = 'Reset to example'; render(); flash('Example plan restored.'); }
+      if (b.dataset.armed) { S = M.clone(M.DEFAULTS); renderRail(); render(); flash('Example plan restored.'); }
       else { b.dataset.armed = '1'; b.textContent = 'Click again to reset'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Reset to example'; }, 4000); }
     } else if (act === 'pdf') {
       exportPDF(b);
@@ -402,6 +440,20 @@
     }
   }
 
+  // ---------- the spider ----------
+  const CHEERS = ['You make work suck less. 🙌', 'Your media plan is so balanced it does yoga. 🧘', 'Somewhere a CFO just smiled at your payback. 😌',
+    'Spreadsheets fear you. Respectfully. 📊', 'You put the “fun” in funnel. 🎢', 'Plot twist: the algorithm is a fan of yours. 💅',
+    'You are the A in every A/B test. 🅰️', 'Go ahead, flex that incremental CAC. 💪', 'Both sides of the marketplace love you. 🛍️',
+    'Your holdout groups are jealous of your reach. 🕸️', 'That reorder rate? Chef’s kiss. 🤌', 'Marginal returns, maximal vibes. ✨',
+    'Retailers reorder, brands thrive, you win. 🏆', 'Coffee count: high. Incrementality: higher. ☕'];
+  let cheerI = Math.floor(Math.random() * CHEERS.length);
+  const showCheer = () => { $('cheer-t').textContent = CHEERS[cheerI]; };
+  const nextCheer = () => { cheerI = (cheerI + 1) % CHEERS.length; showCheer(); };
+  $('cheer-new').addEventListener('click', nextCheer);
+  $('spider').addEventListener('click', nextCheer);
+  showCheer();
+
   window.addEventListener('hashchange', () => { tab = tabFromHash(); render(); });
+  renderRail();
   render();
 })();
