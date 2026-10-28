@@ -26,6 +26,9 @@ The same ten sections as the original hub:
 | **Channel Incrementality** | Per channel and side: platform CAC, MMM / lift reads, incremental customers, iCAC, marginal iCAC, and the mix that equalizes marginal returns. |
 | **Retargeting & Win-back** | Holdout-read win-back segments and the win-back media lines. |
 | **International** | Spend, customers, iCAC, GMV and payback by market, plus a launch checklist. |
+| **Budget Governance** | Monthly pacing by side (plan vs actuals you enter), forecast to land, editable guardrails (LTV : iCAC target, pacing tolerance, reserve, test & learn share), decision rights for moving money, and a scale / hold / trim call per channel from what its next dollar buys. |
+| **Operating Rhythm** | Daily to annual forums (who, inputs, decisions, output), a calendar of reviews, MMM refreshes, test readouts and launch moments for the flight, and the exec scorecard. |
+| **Measurement** | How MTA, MMM and lift tests fit together, which read decides what, per-channel triangulation (platform-reported vs MMM vs lift) with a calibration test roadmap, and data foundations. |
 | **BOM**, **Spec Sheet for Creative Studio**, **Assets**, **Flighting & Projected Outcomes**, **Buy Details**, **Test Plan**, **Spec Sheet & Tagging for Agency** | The original hub tabs, with marketplace channels, funnel (sign-up → approved → first order → repeat), tests and tags. |
 
 Exports: **Download PDF** (every tab, landscape A4), **.xlsx** (this version or all three, including the marketplace tabs), CSV and copy for any tab. Plans save in the browser under Projects, with JSON backups.
