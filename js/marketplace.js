@@ -1,7 +1,7 @@
 /* ==================== MARKETPLACE ADDITIONS ====================
    Loaded after js/hub.js. Adds what a two-sided marketplace needs on top of the Paid Media Hub:
    the JD-based budget split (section 2), a two-sided Growth Plan, Channel Incrementality,
-   Retargeting & Win-back, International, Budget Governance, Operating Rhythm and Measurement tabs, summary tiles and PDF export.
+   Retargeting & Win-back, International, Budget Governance, Operating Rhythm, Measurement and Plan Checks tabs, summary tiles and PDF export.
    The response curves and unit economics come from js/model.js (window.HubModel). */
 (function(){
 'use strict';
@@ -313,6 +313,59 @@ function renderMeas(R){const t=planOf(R),rows=measRows(t),cov=sum(rows.filter(r=
 function measAOA(R){const t=planOf(R);return [['MEASUREMENT · '+TIERNAME[R.tier]],['Method','Answers','Cadence','Decides','Limits'],...STACK,[],['Decision','Source of truth','Cadence'],...DECIDE,[],
  ['Channel','Side','Spend','Platform-reported','MMM factor','Lift read','Lift source','Factor used','Incremental','iCAC','Next calibration'],...measRows(t).map(r=>[r.name,SIDE_NAME[r.side],Math.round(r.spend),Math.round(r.attributed),r.mmm,r.lift??'',r.src,r.used,Math.round(r.incremental),Math.round(r.iCAC),r.next])]}
 
+/* ---------- Plan checks: every input is sane and every tab ties back to the same numbers ---------- */
+// Each check: group, what it checks, the two numbers compared, pass / warn / fail, and where to fix it (a rail section or a tab).
+function planChecks(R){const out=[],T=TIERS[R.tier],budget=+S.budgets[T]||0,linesSum=sum(R.lines.map(l=>l.budget)),t=planOf(R),k=t.kpi,sp=splitOf();
+ const tie=(a,b)=>Math.abs(a-b)<=Math.max(1,Math.abs(b)*0.001);
+ const add=(grp,name,a,b,st,note,fix)=>out.push({grp,name,a,b,st,note,fix});
+ const tieChk=(grp,name,a,b,note,fix)=>add(grp,name,money(a),money(b),tie(a,b)?'pass':'fail',note,fix);
+ // inputs
+ const bs=TIERS.map(x=>+S.budgets[x]||0);
+ add('Inputs','Budgets rise Low → Medium → High',bs.map(v=>'$'+compact(v)).join(' / '),'Low < Medium < High',bs[0]>0&&bs[0]<bs[1]&&bs[1]<bs[2]?'pass':'fail','The three versions should scale up, or the comparison on the Growth Plan is meaningless.','d-budget');
+ const d0=parseD(S.start),d1=parseD(S.end);add('Inputs','Flight dates',`${S.start||'—'} → ${S.end||'—'}`,'End after start',d1>d0?'pass':'fail','Monthly flighting, pacing and the calendar all come from these dates.','d-budget');
+ const on=S.markets.filter(m=>m.on),ws=sum(on.map(m=>+m.weight||0));
+ add('Inputs','Market weights add to 100%',Math.round(ws)+'%','100%',Math.abs(ws-100)<0.5?'pass':'warn','The hub rescales weights that don’t add up, so budgets still tie; fix them so the inputs read the way the plan spends.','d-mkt');
+ const pins=CH.filter(c=>S.channels[c.id]?.on&&pinOf(c.id,R.tier)!=null),ps=sum(pins.map(c=>pinOf(c.id,R.tier)));
+ add('Inputs','Typed channel $ fit inside the budget',money(ps),'≤ '+money(budget),ps<=budget+1?'pass':'fail',ps>budget?'Typed channel amounts exceed the budget and are being scaled down.':'Channels with a typed $ get exactly that; the rest is shared by weight.','d-ch');
+ add('Inputs','Marketplace split in a sensible range',`brands ${pct(sp.brand)} · win-back ${pct(sp.winback)}`,'brands 5–40%, win-back 0–25%',sp.brand>=0.05&&sp.brand<=0.4&&sp.winback<=0.25?'pass':'warn','Outside these ranges the response curves are extrapolating.','d-budget');
+ const P=typeof pipe==='function'?pipe():{};const rates=['mql','sql','win'].map(x=>+P[x]);
+ add('Inputs','Funnel rates (sign-up → approved → first order → repeat)',rates.map(pct).join(' / '),'0–100% each',rates.every(v=>v>0&&v<=1)?'pass':'fail','Used for every projected outcome on the Summary and Flighting tabs.','tab:flight');
+ // the same budget everywhere
+ tieChk('Ties out','Media lines = budget (Summary, BOM, Buy Details, Tagging)',linesSum,budget,'Every tab that lists line items reads these lines.','d-budget');
+ SIDES.forEach(s=>{const got=sum(R.lines.filter(l=>l.side===s).map(l=>l.budget)),want=s==='winback'?budget*sp.winback:s==='brand'?budget*(1-sp.winback)*sp.brand:budget*(1-sp.winback)*(1-sp.brand);
+  const has=R.lines.some(l=>l.side===s);add('Ties out',`${SIDE_NAME[s]} spend = split slider`,money(got),money(want),!has&&want>0?'fail':!has||tie(got,want)||Math.abs(got-want)<=budget*0.005?'pass':'fail',!has&&want>0?`No ${SIDE_NAME[s].toLowerCase()} channel is on, so this share of budget is spread to the other sides.`:'Lines are rescaled to land on the section 2 split.',!has&&want>0?'d-ch':'d-budget')});
+ tieChk('Ties out','Flighting months = budget',sum(R.flightRows.map(f=>sum(f.months))),budget,'Flighting & Projected Outcomes tab.','tab:flight');
+ tieChk('Ties out','Governance pacing plan = budget',sum(monthlyPlan(R).map(r=>r.total)),budget,'Budget Governance tab: each line follows its channel’s flighting.','tab:gov');
+ tieChk('Ties out','Growth Plan media = budget',t.total,budget,'Growth Plan, Channel Incrementality, Win-back, International and Measurement all run on this plan.','tab:growth');
+ tieChk('Ties out','Channel Incrementality + win-back = budget',sum(t.rows.map(r=>r.spend))+t.winbackBudget,budget,'Acquisition channels plus the win-back side.','tab:mpmix');
+ tieChk('Ties out','International market spend = acquisition budget',sum(t.markets.map(m=>m.spend)),t.acq,'International tab: acquisition spend by market.','tab:intl');
+ const mr=measRows(t),ret=sum(mr.filter(r=>r.side==='retailer').map(r=>r.incremental)),br=sum(mr.filter(r=>r.side==='brand').map(r=>r.incremental));
+ add('Ties out','Measurement customers = Growth Plan',`${n0(ret)} retailers · ${n0(br)} brands`,`${n0(k.newRetailers)} · ${n0(k.newBrands)}`,Math.abs(ret-k.newRetailers)<1&&Math.abs(br-k.newBrands)<1?'pass':'fail','The Measurement tab, Summary tiles and exec scorecard all use the same incremental counts.','tab:meas');
+ const noBom=R.lines.filter(l=>!(l.bomIds||[]).length);add('Ties out','Every media line has creative in the BOM',`${R.lines.length-noBom.length} of ${R.lines.length}`,'all lines',noBom.length?'fail':'pass',noBom.length?'Lines without creative: '+noBom.slice(0,5).map(l=>l.id).join(', '):'BOM, spec sheets and tagging cover every line.','tab:bom');
+ let TP=[];try{TP=testPlan(R).tests}catch(e){}
+ const byId=Object.fromEntries(R.lines.map(l=>[l.id,l])),over=TP.filter(x=>x.budget>0&&x.budget>sum((x.lineIds||[]).map(id=>byId[id]?.budget||0))+1);
+ add('Ties out','Test cells fit inside their media lines',`${TP.length-over.length} of ${TP.length} tests`,'cells ≤ line budget',over.length?'fail':'pass',over.length?'Over: '+over.map(x=>x.id).join(', '):'Test budgets are carved out of the lines they run on, not added on top.','tab:tests');
+ // across versions
+ const vs=[0,1,2].map(i=>{const r=i===R.tier?R:compute(i);return [sum(r.lines.map(l=>l.budget)),+S.budgets[TIERS[i]]||0]});
+ add('Ties out','All three versions tie to their budgets',vs.map(v=>'$'+compact(v[0])).join(' / '),vs.map(v=>'$'+compact(v[1])).join(' / '),vs.every(v=>tie(v[0],v[1]))?'pass':'fail','Low, Medium and High are built the same way from the same inputs.','d-budget');
+ // reasonableness
+ const pc=pacing(R),G=gov();
+ add('Reasonableness','Actuals to date vs plan',pc.last>=0?money(pc.actToDate):'none entered',pc.last>=0?money(pc.planToDate)+' ± '+pct(G.tol):'—',pc.last<0?'pass':Math.abs(pc.actToDate/Math.max(1,pc.planToDate)-1)<=G.tol?'pass':'warn','Enter actuals on the Budget Governance tab as each month closes.','tab:gov');
+ add('Reasonableness','Unit economics pay back',`retailers ${x1(k.rLtvCac)} · brands ${x1(k.bLtvCac)}`,'LTV : iCAC ≥ 1×',k.rLtvCac>=1&&k.bLtvCac>=1?'pass':'warn','Below 1× the side loses money over the LTV horizon; check the unit economics on the Growth Plan.','tab:growth');
+ add('Reasonableness','Network balance',isFinite(k.ratio)?Math.round(k.ratio)+' : 1':'—',`${t.p.balance.min}–${t.p.balance.max} : 1`,k.balance==='balanced'?'pass':'warn','New retailers per new brand. Outside the band, one side of the marketplace is outgrowing the other.','d-budget');
+ return out}
+const CK_ICON={pass:'✓',warn:'!',fail:'✕'};
+function checkBadge(R){const c=planChecks(R),f=c.filter(x=>x.st==='fail').length,w=c.filter(x=>x.st==='warn').length;
+ return `<button class="ck-badge ${f?'fail':w?'warn':'pass'}" data-wz-open="tab:checks">${f||w?`${f?f+' check'+(f>1?'s':'')+' failing':''}${f&&w?' · ':''}${w?w+' to review':''}`:`All ${c.length} plan checks pass`} →</button>`}
+function renderChecks(R){const c=planChecks(R),f=c.filter(x=>x.st==='fail').length,w=c.filter(x=>x.st==='warn').length,grps=[...new Set(c.map(x=>x.grp))];
+ return `<div class="panel mp" style="display:flex;flex-direction:column;gap:18px">
+ <div><div class="eyebrow">${esc(TIERNAME[R.tier])} version · plan checks</div><h2 style="font-size:20px;margin-top:2px">${f||w?`${c.length-f-w} of ${c.length} checks pass${f?` · ${f} failing`:''}${w?` · ${w} to review`:''}`:`All ${c.length} checks pass: every tab ties back to the same ${money(+S.budgets[TIERS[R.tier]]||0)}`}</h2>
+ <div class="note">Every tab is calculated from one set of inputs, so the totals should always agree. These checks run on every change: inputs that don't make sense, totals that should match across tabs, and numbers worth a second look. Click a row's link to go to where it is fixed.</div></div>
+ <div class="tscroll"><table class="ck-t"><thead><tr><th></th><th>Check</th><th class="n">This plan</th><th class="n">Should be</th><th>Why it matters</th><th></th></tr></thead><tbody>
+ ${grps.map(g=>`<tr class="ck-g"><td colspan="6">${esc({Inputs:'Inputs make sense','Ties out':'Same numbers across every tab',Reasonableness:'Worth a second look'}[g]||g)}</td></tr>
+  ${c.filter(x=>x.grp===g).map(x=>`<tr><td><span class="ck ${x.st}" title="${x.st}">${CK_ICON[x.st]}</span></td><td>${esc(x.name)}</td><td class="n">${esc(x.a)}</td><td class="n">${esc(x.b)}</td><td class="sub2">${esc(x.note)}</td><td style="white-space:nowrap"><a href="#" data-wz-open="${x.fix}">${x.fix.startsWith('tab:')?'Open tab':'Edit input'}</a></td></tr>`).join('')}`).join('')}</tbody></table></div></div>`}
+function checksAOA(R){return [['PLAN CHECKS · '+TIERNAME[R.tier]],['Group','Check','This plan','Should be','Status','Why it matters'],...planChecks(R).map(x=>[x.grp,x.name,x.a,x.b,x.st.toUpperCase(),x.note])]}
+
 /* ---------- Setup wizard: what the plan still needs, section by section ---------- */
 // Each step points at a section of the inputs pane (or a tab) and returns what is still missing ('' = done).
 function setupSteps(){const R=compute(UI.tier===3?1:UI.tier),sp=splitOf(),on=S.markets.filter(m=>m.on&&+m.weight>0),P=S.personas||{};
@@ -353,9 +406,9 @@ document.addEventListener('input',e=>{const i=e.target.dataset&&e.target.dataset
 // the inputs pane changes without a re-render of the plan on some fields: refresh the checklist after any edit there
 document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('.rail')&&!e.target.closest('#setup-wizard'))setTimeout(renderWizard,150)});
 
-window.MP_TABS={mpmix:renderMix,winback:renderWinback,intl:renderIntl,gov:renderGov,rhythm:renderRhythm,meas:renderMeas};
-window.MP_AOA={mpmix:mixAOA,winback:wbAOA,intl:intlAOA,gov:govAOA,rhythm:rhythmAOA,meas:measAOA};
-window.MP_NAMES={mpmix:'Channel Incrementality',winback:'Win-back',intl:'International',gov:'Budget Governance',rhythm:'Operating Rhythm',meas:'Measurement'};
+window.MP_TABS={mpmix:renderMix,winback:renderWinback,intl:renderIntl,gov:renderGov,rhythm:renderRhythm,meas:renderMeas,checks:renderChecks};
+window.MP_AOA={mpmix:mixAOA,winback:wbAOA,intl:intlAOA,gov:govAOA,rhythm:rhythmAOA,meas:measAOA,checks:checksAOA};
+window.MP_NAMES={mpmix:'Channel Incrementality',winback:'Win-back',intl:'International',gov:'Budget Governance',rhythm:'Operating Rhythm',meas:'Measurement',checks:'Plan Checks'};
 
 /* ---------- wiring ---------- */
 function setPath(path,v){const ks=path.split('.').map(k=>k.replace('~','|')),o=mp();let x=o;
@@ -383,6 +436,8 @@ function wireSplit(){const b=$('#sp-brand'),w=$('#sp-wb');if(!b)return;
  $('#sp-reset').onclick=()=>{S.split={...SPLIT_DEF};syncSplit();changed()};syncSplit()}
 if(!S.split)S.split={...SPLIT_DEF};
 const _renderOut=window.renderOut;window.renderOut=function(){_renderOut();syncSplit();renderWizard();
+ // plan checks badge on every tab except the checks tab itself
+ if(UI.tier!==3&&UI.tab!=='checks'){const p=$('#view .panel');if(p)try{p.insertAdjacentHTML('afterbegin',checkBadge(compute(UI.tier)))}catch(e){}}
  // on the Summary, a compact "finish setting up" box until every section is ready (not on the example)
  if(UI.tier!==3&&UI.tab==='summary'&&S.name!==EX_NAME&&setupSteps().some(x=>x.gap)){const p=$('#view .panel');if(p)p.insertAdjacentHTML('afterbegin',`<div class="wz-op">${'<h3 style="font-size:14px;margin:0">Finish setting up the plan</h3>'+wizardHtml(true)}</div>`)}};
 
