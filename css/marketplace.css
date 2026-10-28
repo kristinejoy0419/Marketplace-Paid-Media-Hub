@@ -52,3 +52,16 @@ body.exporting header.top h1{background:none;-webkit-text-fill-color:currentColo
 @keyframes wzflash{0%,30%{box-shadow:0 0 0 3px var(--rose)}100%{box-shadow:0 0 0 0 transparent}}
 @media (prefers-reduced-motion:reduce){.rail details.wz-flash{animation:none}}
 body.exporting .wz-op{display:none!important}
+/* Plan checks */
+.ck-t td:nth-child(2){min-width:180px}
+.ck-t td:nth-child(3),.ck-t td:nth-child(4){max-width:170px;white-space:normal}
+.ck-t td:nth-child(5){min-width:260px}
+.ck-t tr.ck-g td{background:var(--sunk);font-weight:700;font-size:13px;padding-top:12px}
+.ck{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:99px;font-size:11px;font-weight:800}
+.ck.pass{background:var(--green-soft);color:var(--green)}
+.ck.warn{background:var(--rose-soft);color:var(--rose)}
+.ck.fail{background:var(--over);color:#fff}
+.ck-badge{align-self:flex-start;border:1px solid var(--line);border-radius:99px;padding:5px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;background:var(--green-soft);color:var(--green)}
+.ck-badge.warn{background:var(--rose-soft);color:var(--rose);border-color:var(--rose-line)}
+.ck-badge.fail{background:var(--over);color:#fff;border-color:transparent}
+body.exporting .ck-badge{display:none!important}
