@@ -1755,7 +1755,7 @@ $('#btn-reset').onclick=()=>{S=exampleState();renderInputs();changed();setStatus
 
 /* ==================== OUTPUT RENDERING ==================== */
 let T_=null;function changed(){save();clearTimeout(T_);T_=setTimeout(()=>{renderOut()},120)}
-const TABS=[['summary','Paid Media Summary'],['growth','Growth Plan'],['mpmix','Channel Incrementality'],['winback','Retargeting & Win-back'],['intl','International'],['bom','BOM'],['spec','Spec Sheet for Creative Studio'],['assets','Assets'],['flight','Flighting & Projected Outcomes'],['assump','Buy Details'],['tests','Test Plan'],['tagging','Spec Sheet & Tagging for Agency']];
+const TABS=[['summary','Paid Media Summary'],['growth','Growth Plan'],['mpmix','Channel Incrementality'],['winback','Retargeting & Win-back'],['intl','International'],['gov','Budget Governance'],['rhythm','Operating Rhythm'],['meas','Measurement'],['bom','BOM'],['spec','Spec Sheet for Creative Studio'],['assets','Assets'],['flight','Flighting & Projected Outcomes'],['assump','Buy Details'],['tests','Test Plan'],['tagging','Spec Sheet & Tagging for Agency']];
 function renderSeg(){
  $('#ver-seg').innerHTML=TIERNAME.map((n,i)=>`<button aria-pressed="${UI.tier===i}" data-t="${i}">${n}<span class="amt">${compact(+S.budgets[TIERS[i]]||0).replace(/^/,'$')}</span></button>`).join('')+`<button aria-pressed="${UI.tier===3}" data-t="3">Compare<span class="amt">all three</span></button>`;
  $('#ver-seg').querySelectorAll('button').forEach(b=>b.onclick=()=>{UI.tier=+b.dataset.t;save();renderOut()});
@@ -2662,7 +2662,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* ==================== MARKETPLACE ADDITIONS ====================
    Loaded after js/hub.js. Adds what a two-sided marketplace needs on top of the Paid Media Hub:
    the JD-based budget split (section 2), a two-sided Growth Plan, Channel Incrementality,
-   Retargeting & Win-back and International tabs, summary tiles and PDF export.
+   Retargeting & Win-back, International, Budget Governance, Operating Rhythm and Measurement tabs, summary tiles and PDF export.
    The response curves and unit economics come from js/model.js (window.HubModel). */
 (function(){
 'use strict';
@@ -2851,6 +2851,129 @@ function intlAOA(R){const t=planOf(R);return [['INTERNATIONAL · '+TIERNAME[R.ti
  ...t.markets.map(m=>[m.name,m.stage,m.weight,m.cac,m.aov,Math.round(m.spend),Math.round(m.retailers),Math.round(m.brands),Math.round(m.iCAC),Math.round(m.gmvY1),Math.round(m.payback)])]}
 
 
+/* ---------- Budget governance, operating rhythm and measurement: how the plan is run once it is live ---------- */
+const GOV_DEF={ltvTarget:2,reserve:0.05,tol:0.1,testShare:0.1};
+const gov=()=>({...GOV_DEF,...(mp().gov||{})});
+const SIDES=['retailer','brand','winback'];
+// planned spend per month and side: each line follows its channel's flighting curve
+function monthlyPlan(R){const fr=Object.fromEntries(R.flightRows.map(f=>[f.c.id,f])),out=R.months.map(m=>({m,retailer:0,brand:0,winback:0,total:0}));
+ R.lines.forEach(l=>{const f=fr[l.c.id];R.months.forEach((_,i)=>{const v=l.budget*(f&&f.total?f.months[i]/f.total:1/R.months.length);out[i][l.side]+=v;out[i].total+=v})});return out}
+const actOf=R=>((mp().act||{})[TIERS[R.tier]]||{});
+function pacing(R){const P=monthlyPlan(R),A=actOf(R),G=gov();let cumP=0,cumA=0,planToDate=0,actToDate=0,last=-1;
+ P.forEach((r,i)=>{if(A[r.m]!=null){last=i}});
+ const rows=P.map((r,i)=>{cumP+=r.total;const a=A[r.m];if(a!=null)cumA+=a;if(i<=last){planToDate+=r.total;actToDate+=a||0}
+  const v=a!=null&&r.total?a/r.total-1:null,st=v==null?'':Math.abs(v)<=G.tol/2?'On pace':Math.abs(v)<=G.tol?'Watch':v>0?'Over: pull back':'Under: reallocate';
+  return {...r,act:a,v,st,cumP,cumA:i<=last?cumA:null}});
+ const total=sum(P.map(r=>r.total)),remaining=sum(P.slice(last+1).map(r=>r.total)),runRate=planToDate?actToDate/planToDate:1;
+ return {rows,total,last,planToDate,actToDate,landPlan:actToDate+remaining,landRun:actToDate+remaining*runRate,runRate}}
+// scale / hold / cut: the LTV each channel's next dollar buys (LTV ÷ marginal iCAC) against the guardrail and break-even
+function signals(t){const G=gov();return t.rows.filter(r=>r.spend>0).map(r=>{const mr=r.marginal?r.ltv/r.marginal:0;
+ return {...r,mr,call:mr>=G.ltvTarget?'Scale':mr>=1?'Hold':'Cut'}}).sort((a,b)=>a.side.localeCompare(b.side)*-1||b.mr-a.mr)}
+const stChip=s=>!s?'':`<span class="chip ${s==='On pace'||s==='Scale'?'mp-ok':s==='Watch'||s==='Hold'?'':'flag'}">${s}</span>`;
+function renderGov(R){const t=planOf(R),G=gov(),pc=pacing(R),T=TIERS[R.tier],sg=signals(t),tot=t.total;
+ const mAvg=tot/Math.max(1,R.months.length),side=k=>t.sideBudget?.[k]??(k==='winback'?t.winbackBudget:0);
+ const sideM=k=>(k==='winback'?t.winbackBudget:side(k))/Math.max(1,R.months.length);
+ const hasAct=pc.last>=0;
+ return `<div class="panel mp" style="display:flex;flex-direction:column;gap:18px">
+ <div><div class="eyebrow">${esc(TIERNAME[R.tier])} version · budget governance</div><h2 style="font-size:20px;margin-top:2px">${money(tot)} run on rules, not opinion: monthly pacing, a ${pct(G.reserve)} reserve and clear decision rights</h2>
+ <div class="note">Plan by month comes from the Flighting tab. Enter actual spend as each month closes (in $M) to see the variance, the forecast to land and what to do about it. The guardrails below are editable and drive the scale / hold / cut calls.</div></div>
+ <div class="tiles">${tile(hasAct?pct(pc.actToDate/Math.max(1,pc.planToDate)):'—','Spend vs plan to date',hasAct&&Math.abs(pc.runRate-1)>G.tol?'flag':'','Actual spend ÷ planned spend for the months with actuals entered.')}${tile(money(pc.landRun),'Forecast to land (run rate)',Math.abs(pc.landRun/tot-1)>G.tol?'flag':'','Actual spend to date + the remaining plan scaled by the run rate so far (at plan: '+money(pc.landPlan)+'). This is the number Finance accrues against.')}${tile(money(tot*G.reserve),'Reserve held back','','Unallocated at the start of each quarter; released at the monthly business review to the channels with the lowest marginal iCAC.')}</div>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Pacing: plan vs actual by month</h3><div class="tscroll"><table><thead><tr><th>Month</th><th class="n">Retailers</th><th class="n">Brands</th><th class="n">Win-back</th><th class="n">Plan</th><th class="n">Actual $M</th><th class="n">Variance</th><th>Status</th><th class="n">Cumulative plan</th><th class="n">Cumulative actual</th></tr></thead><tbody>
+ ${pc.rows.map(r=>`<tr${r.act!=null?'':' style="color:var(--muted)"'}><td>${monthLabel(r.m)}</td><td class="n">${money(r.retailer)}</td><td class="n">${money(r.brand)}</td><td class="n">${money(r.winback)}</td><td class="n"><strong>${money(r.total)}</strong></td><td class="n">${num('act.'+T+'.'+r.m,r.act,'m',72)}</td><td class="n ${r.v!=null&&Math.abs(r.v)>G.tol?'mp-bad':''}">${r.v==null?'':(r.v>0?'+':'')+pct(r.v)}</td><td>${stChip(r.st)}</td><td class="n">${money(r.cumP)}</td><td class="n">${r.cumA==null?'':money(r.cumA)}</td></tr>`).join('')}</tbody></table></div>
+ <div class="btns" style="margin-top:8px"><button class="btn sm ghost" id="mp-ex-act">Fill example actuals (first 3 months)</button><button class="btn sm ghost" id="mp-reset-act">Clear actuals</button></div></div>
+ <div class="cols">
+  <div class="mp-card"><h3>Guardrails</h3>
+   <div class="mp-f"><span>Target LTV : iCAC (both sides)</span>${num('gov.ltvTarget',G.ltvTarget,'raw',58)}</div>
+   <div class="mp-f"><span>Pacing tolerance ± %</span>${num('gov.tol',G.tol,'pct',58)}</div>
+   <div class="mp-f"><span>Quarterly reserve %</span>${num('gov.reserve',G.reserve,'pct',58)}</div>
+   <div class="mp-f"><span>Test & learn share %</span>${num('gov.testShare',G.testShare,'pct',58)}</div>
+   <p class="note">Test & learn: ${money(tot*G.testShare)} for new channels and the Test Plan. A test graduates to core budget only when its lift read clears the LTV : iCAC target.</p></div>
+  <div class="mp-card"><h3>Finance partnership</h3><ul class="assump">
+   <li>Accrue platform and agency spend by business day 3, by cost center (the Tagging tab carries the codes).</li>
+   <li>Refresh the forecast to land monthly; explain any variance above ${pct(G.tol/2)} in writing.</li>
+   <li>Report incremental customers and contribution, not platform ROAS, so Finance and Marketing share one number.</li>
+   <li>Agree in advance that unspent budget returns to the reserve, not to the channel that missed.</li></ul></div>
+ </div>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Decision rights: who can move money, how much, and when</h3><div class="tscroll"><table><thead><tr><th>Move</th><th>Limit</th><th>Who decides</th><th>When</th><th>Trigger</th></tr></thead><tbody>
+  <tr><td>Inside a channel (campaigns, bids, audiences)</td><td>Up to 20% of the channel's month</td><td>Channel lead or agency</td><td>Any day; logged weekly</td><td>Platform CAC × incrementality factor drifts from plan</td></tr>
+  <tr><td>Across channels on one side</td><td>Up to 10% of the side's month (${money(sideM('retailer')*0.1)} retailers, ${money(sideM('brand')*0.1)} brands)</td><td>Head of Paid Marketing</td><td>Monthly business review</td><td>Marginal iCAC gap above 25% between channels</td></tr>
+  <tr><td>Release the reserve</td><td>${money(tot*G.reserve)} a quarter</td><td>Head of Paid + Finance partner</td><td>Monthly business review</td><td>A channel marked Scale or Hold below, with a lift or MMM read behind it</td></tr>
+  <tr><td>Change the marketplace split</td><td>Any move between retailers, brands and win-back</td><td>Head of Paid, Finance, Supply GM</td><td>QBR</td><td>Network balance outside the band, or an MMM refresh</td></tr>
+  <tr><td>Change the total</td><td>Above ${money(tot)} or a cut of more than ${pct(G.tol)}</td><td>CMO + CFO</td><td>QBR or off-cycle</td><td>Forecast to land outside tolerance two months running</td></tr>
+ </tbody></table></div></div>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Scale, hold or cut: what the next dollar buys</h3><div class="tscroll"><table><thead><tr><th>Channel</th><th>Side</th><th class="n">Plan spend</th><th class="n">Average iCAC</th><th class="n">Marginal iCAC</th><th class="n">LTV : marginal iCAC</th><th>Call</th></tr></thead><tbody>
+ ${sg.map(r=>`<tr><td>${esc(r.name)}</td><td>${SIDE_NAME[r.side]}</td><td class="n">${money(r.spend)}</td><td class="n">${usd(r.iCAC)}</td><td class="n">${usd(r.marginal)}</td><td class="n ${r.mr<1?'mp-bad':''}">${isFinite(r.mr)?r.mr.toFixed(2)+'×':'—'}</td><td>${stChip(r.call)}</td></tr>`).join('')}</tbody></table></div>
+ <p class="note" style="margin-top:6px">The plan's average has to clear ${x1(G.ltvTarget)}; the next dollar only has to pay back. Scale = the next dollar still clears ${x1(G.ltvTarget)}. Hold = it pays back but below the target. Cut = it no longer pays back: trim 20% next month and move it to the best channel on the same side (the Channel Incrementality tab shows the rebalanced mix).</p></div>
+ <div class="btns"><button class="btn sm ghost" id="mp-reset-gov">Reset guardrails</button></div></div>`}
+function govAOA(R){const t=planOf(R),pc=pacing(R),G=gov();return [['BUDGET GOVERNANCE · '+TIERNAME[R.tier]],['Target LTV : iCAC',G.ltvTarget],['Pacing tolerance',G.tol],['Reserve',G.reserve],['Test & learn share',G.testShare],['Forecast to land (plan)',Math.round(pc.landPlan)],['Forecast to land (run rate)',Math.round(pc.landRun)],[],
+ ['Month','Retailers','Brands','Win-back','Plan','Actual','Variance','Status'],...pc.rows.map(r=>[monthLabel(r.m),Math.round(r.retailer),Math.round(r.brand),Math.round(r.winback),Math.round(r.total),r.act==null?'':Math.round(r.act),r.v==null?'':+r.v.toFixed(3),r.st]),[],
+ ['Channel','Side','Plan spend','Average iCAC','Marginal iCAC','LTV : marginal iCAC','Call'],...signals(t).map(r=>[r.name,SIDE_NAME[r.side],Math.round(r.spend),Math.round(r.iCAC),Math.round(r.marginal),+r.mr.toFixed(2),r.call])]}
+
+/* ---------- Operating rhythm ---------- */
+const RHYTHM=[
+ ['Daily','Spend and anomaly alerts (automated)','Channel leads, agency','Platform spend, CPA, delivery','Pause or fix anything pacing ±15% for the day','Alert in the team channel'],
+ ['Weekly · Mon','Pacing & performance','Head of Paid, channel leads, agency, analytics','Pacing vs plan, incrementality-adjusted CAC by channel, creative fatigue','Moves inside a channel (up to 20%)','One-page scorecard'],
+ ['Every 2 weeks','Creative & test review','Channel leads, creative studio','Test readouts (Test Plan tab), fatigue, new BOM round','Scale winners, brief the next round','Creative brief'],
+ ['Monthly','Business review with Finance','Head of Paid, Finance partner, analytics','Actuals vs plan, forecast to land, marginal iCAC by channel','Moves across channels (up to 10%), release the reserve','Reforecast + variance memo'],
+ ['Monthly','Marketplace balance review','Head of Paid, Supply / brand team, Sales','New brands vs new retailers, category gaps, win-back reads','Brand targeting by category; win-back audiences','Balance note'],
+ ['Quarterly','Business review (QBR) with execs','CMO, CFO, marketplace GM, Head of Paid','MMM refresh, lift results, LTV cohorts, network balance','Next quarter’s split, total and test roadmap','QBR deck'],
+ ['Annually','Planning','CMO, CFO, Head of Paid','Year’s MMM, cohort LTV, market expansion','Budget envelope, goals, markets','Annual plan (this hub)']];
+function rhythmCal(R){const TP=(()=>{try{return testPlan(R).tests}catch(e){return []}})(),M0=R.months;
+ return [['Monthly business review',M0.map(()=>'●')],['QBR',M0.map((_,i)=>i%3===2||i===M0.length-1?'●':'')],['MMM refresh',M0.map((_,i)=>i%3===1?'●':'')],
+  ['Test readouts',M0.map(m=>TP.filter(t=>t.month===m).map(t=>t.id).join(' '))],['Launch moments',M0.map(m=>S.moments.filter(x=>x.month===m).map(x=>x.name).join(', '))]]}
+function scorecard(R){const t=planOf(R),k=t.kpi,G=gov();
+ return [['Spend vs plan','Within ±'+pct(G.tol),'Actual ÷ planned spend, month to date','Platforms + finance accruals','Weekly'],
+  ['Incremental new retailers',n0(k.newRetailers),'Platform first orders × incrementality factor','Calibrated MTA, MMM','Weekly / monthly'],
+  ['Retailer iCAC',usd(k.rICAC),'Retailer acquisition spend ÷ incremental new retailers','Calibrated MTA, MMM','Weekly / monthly'],
+  ['Incremental new brands',n0(k.newBrands),'Activated brands × incrementality factor','CRM + MMM','Monthly'],
+  ['Brand iCAC',usd(k.bICAC),'Brand acquisition spend ÷ incremental new brands','CRM + MMM','Monthly'],
+  ['Network balance',k.balance,'New retailers per new brand, against the band','Growth Plan','Monthly'],
+  ['First-year GMV from media','$'+compact(k.gmvY1),'Incremental retailers, brands and win-back reorders','Cohort GMV','Monthly'],
+  ['LTV : iCAC',x1(k.rLtvCac)+' / '+x1(k.bLtvCac),'Retailers / brands, against the '+x1(G.ltvTarget)+' guardrail','Cohort LTV','Quarterly'],
+  ['Retailer payback',mo(k.rPayback),'Months of contribution to repay iCAC','Finance','Quarterly'],
+  ['Win-back iROAS',x1(k.wbGMV/Math.max(1,t.winbackBudget)),'Incremental GMV over holdout ÷ win-back spend','Holdouts','Monthly']]}
+function renderRhythm(R){const cal=rhythmCal(R);
+ return `<div class="panel mp" style="display:flex;flex-direction:column;gap:18px">
+ <div><div class="eyebrow">${esc(TIERNAME[R.tier])} version · operating rhythm</div><h2 style="font-size:20px;margin-top:2px">Who meets when, what they look at, and what they are allowed to decide</h2>
+ <div class="note">Each forum has one job and one output. Budget moves follow the decision rights on the Budget Governance tab; the numbers come from the Measurement tab.</div></div>
+ <div class="tscroll"><table><thead><tr><th>Cadence</th><th>Forum</th><th>Who</th><th>Looks at</th><th>Decides</th><th>Output</th></tr></thead><tbody>
+ ${RHYTHM.map(r=>`<tr><td><strong>${esc(r[0])}</strong></td>${r.slice(1).map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Calendar for this flight</h3><div class="tscroll"><table><thead><tr><th></th>${R.months.map(m=>`<th style="text-align:center">${monthLabel(m)}</th>`).join('')}</tr></thead><tbody>
+ ${cal.map(([n,c])=>`<tr><td style="white-space:nowrap">${esc(n)}</td>${c.map(x=>`<td style="font-size:11px;min-width:84px;text-align:center">${esc(x).replace(/, /g,'<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Exec scorecard: the ten numbers every review starts with</h3><div class="tscroll"><table><thead><tr><th>Metric</th><th class="n">Plan</th><th>Definition</th><th>Source</th><th>Reviewed</th></tr></thead><tbody>
+ ${scorecard(R).map(r=>`<tr><td>${esc(r[0])}</td><td class="n"><strong>${esc(r[1])}</strong></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td></tr>`).join('')}</tbody></table></div>
+ <p class="note" style="margin-top:6px">Every number is incremental. Platform-reported ROAS stays in the channel teams' tools and never goes in front of execs on its own.</p></div></div>`}
+function rhythmAOA(R){return [['OPERATING RHYTHM · '+TIERNAME[R.tier]],['Cadence','Forum','Who','Looks at','Decides','Output'],...RHYTHM,[],['Calendar',...R.months.map(monthLabel)],...rhythmCal(R).map(([n,c])=>[n,...c]),[],['Metric','Plan','Definition','Source','Reviewed'],...scorecard(R)]}
+
+/* ---------- Measurement: MTA, MMM and lift, and which one decides what ---------- */
+const STACK=[
+ ['Platform attribution & MTA','Which ad, audience and keyword drove a sign-up or first order','Daily to weekly','Bids, creative and audiences inside a channel','Over-credits retargeting and branded search; cannot see across walled gardens. Used only after the incrementality factor is applied.'],
+ ['Marketing mix model (MMM)','How much each channel adds at the margin, and where the curve flattens','Refreshed quarterly on weekly data','The mix across channels and the split between retailers, brands and win-back','Slow, and only as good as its priors: calibrated with every lift test.'],
+ ['Incrementality tests (lift & geo holdouts)','Did this channel cause orders that would not have happened anyway','2–4 tests a quarter; always-on win-back holdouts','Whether a channel works at all; the MMM priors; scale-up of new markets','Costs reach while running, and reads one channel at a time.']];
+const DECIDE=[['Bids, budgets inside a campaign','Platform / MTA','Daily'],['Which channel gets next month’s money','MMM marginal iCAC, calibrated by lift','Monthly'],['Split between retailers, brands and win-back','MMM + cohort LTV','Quarterly'],['Keep, scale or kill a channel','Lift test or geo holdout','Per test'],['Win-back and retargeting spend','Always-on holdout','Monthly'],['Launch or scale a market','Geo holdout','Per market']];
+function measRows(t){const byId=Object.fromEntries(t.p.channels.map(c=>[c.id,c]));
+ const rows=t.rows.filter(r=>r.spend>0).map(r=>{const c=byId[r.id]||{};const gap=c.lift!=null&&c.mmm?Math.abs(c.lift/c.mmm-1):null;
+  return {...r,mmm:c.mmm,lift:c.lift,src:c.liftSrc||'',gap,used:c.lift!=null?'Lift':'MMM'}}).sort((a,b)=>b.spend-a.spend);
+ let q=0;const Q=['Q1','Q1','Q2','Q2','Q3','Q3','Q4','Q4'];rows.forEach(r=>{r.next=r.lift==null?(q<Q.length?`${/search|google/i.test(r.name)?'Geo holdout':/meta|tiktok|pinterest|reddit|linkedin/i.test(r.name)?'Conversion lift':'Geo holdout'} · ${Q[q++]}`:'Next year'):r.gap>0.15?'Re-weight the MMM prior':'Re-test in 12 months'});
+ return rows}
+function renderMeas(R){const t=planOf(R),rows=measRows(t),cov=sum(rows.filter(r=>r.lift!=null).map(r=>r.spend))/Math.max(1,sum(rows.map(r=>r.spend))),attr=sum(rows.map(r=>r.attributed||0)),inc=sum(rows.map(r=>r.incremental));
+ return `<div class="panel mp" style="display:flex;flex-direction:column;gap:18px">
+ <div><div class="eyebrow">${esc(TIERNAME[R.tier])} version · measurement</div><h2 style="font-size:20px;margin-top:2px">Three reads, one number per decision: platforms report ${n0(attr)} new customers, ${n0(inc)} are incremental</h2>
+ <div class="note">MTA is fast but generous, MMM is fair but slow, and lift tests are the truth for one channel at a time. Lift calibrates the MMM, and the MMM's incrementality factor corrects MTA, so every forum works from the same number.</div></div>
+ <div class="tiles">${tile(pct(inc/Math.max(1,attr)),'Incremental share of platform-reported','','Incremental new customers ÷ platform-attributed new customers, across acquisition channels.')}${tile(pct(cov),'Spend with a lift read','','Share of acquisition spend in channels with a lift test or geo holdout behind the incrementality factor.')}${tile(String(rows.filter(r=>r.lift==null).length),'Channels to test','','Channels running on an MMM read only. The roadmap below schedules a test for each, biggest spend first.')}</div>
+ <div class="mp-grid">${STACK.map(s=>`<div class="mp-card"><h3>${esc(s[0])}</h3><p><strong>Answers:</strong> ${esc(s[1])}</p><p><strong>Cadence:</strong> ${esc(s[2])}</p><p><strong>Decides:</strong> ${esc(s[3])}</p><p class="note">${esc(s[4])}</p></div>`).join('')}</div>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Which read decides what</h3><div class="tscroll"><table><thead><tr><th>Decision</th><th>Source of truth</th><th>Cadence</th></tr></thead><tbody>${DECIDE.map(d=>`<tr>${d.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
+ <div><h3 style="font-size:14px;margin-bottom:6px">Triangulation and test roadmap by channel</h3><div class="tscroll"><table><thead><tr><th>Channel</th><th>Side</th><th class="n">Spend</th><th class="n">Platform-reported</th><th class="n">MMM factor</th><th class="n">Lift read</th><th>Lift source</th><th>Factor used</th><th class="n">Incremental</th><th class="n">iCAC</th><th>Next calibration</th></tr></thead><tbody>
+ ${rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${SIDE_NAME[r.side]}</td><td class="n">${money(r.spend)}</td><td class="n">${n0(r.attributed)}</td><td class="n">${pct(r.mmm||0)}</td><td class="n">${r.lift!=null?pct(r.lift):'—'}</td><td>${esc(r.src)||'—'}</td><td>${r.used}</td><td class="n">${n0(r.incremental)}</td><td class="n">${usd(r.iCAC)}</td><td>${esc(r.next)}</td></tr>`).join('')}</tbody></table></div>
+ <p class="note" style="margin-top:6px">Edit the MMM and lift reads on the Channel Incrementality tab; this table and every iCAC update with them.</p></div>
+ <div class="mp-card"><h3>Data foundations</h3><ul class="assump">
+  <li>Server-side conversions: Meta Conversions API, Google enhanced conversions, TikTok Events API.</li>
+  <li>Import approved retailers and first orders back to the platforms, so they optimize to buyers and not sign-ups.</li>
+  <li>One naming and UTM taxonomy across agencies (the Tagging tab), so MTA, MMM and finance join on the same keys.</li>
+  <li>A weekly spend and outcome feed by channel and market for the MMM, plus a holdout registry so tests never overlap.</li></ul></div></div>`}
+function measAOA(R){const t=planOf(R);return [['MEASUREMENT · '+TIERNAME[R.tier]],['Method','Answers','Cadence','Decides','Limits'],...STACK,[],['Decision','Source of truth','Cadence'],...DECIDE,[],
+ ['Channel','Side','Spend','Platform-reported','MMM factor','Lift read','Lift source','Factor used','Incremental','iCAC','Next calibration'],...measRows(t).map(r=>[r.name,SIDE_NAME[r.side],Math.round(r.spend),Math.round(r.attributed),r.mmm,r.lift??'',r.src,r.used,Math.round(r.incremental),Math.round(r.iCAC),r.next])]}
+
 /* ---------- Setup wizard: what the plan still needs, section by section ---------- */
 // Each step points at a section of the inputs pane (or a tab) and returns what is still missing ('' = done).
 function setupSteps(){const R=compute(UI.tier===3?1:UI.tier),sp=splitOf(),on=S.markets.filter(m=>m.on&&+m.weight>0),P=S.personas||{};
@@ -2891,9 +3014,9 @@ document.addEventListener('input',e=>{const i=e.target.dataset&&e.target.dataset
 // the inputs pane changes without a re-render of the plan on some fields: refresh the checklist after any edit there
 document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('.rail')&&!e.target.closest('#setup-wizard'))setTimeout(renderWizard,150)});
 
-window.MP_TABS={mpmix:renderMix,winback:renderWinback,intl:renderIntl};
-window.MP_AOA={mpmix:mixAOA,winback:wbAOA,intl:intlAOA};
-window.MP_NAMES={mpmix:'Channel Incrementality',winback:'Win-back',intl:'International'};
+window.MP_TABS={mpmix:renderMix,winback:renderWinback,intl:renderIntl,gov:renderGov,rhythm:renderRhythm,meas:renderMeas};
+window.MP_AOA={mpmix:mixAOA,winback:wbAOA,intl:intlAOA,gov:govAOA,rhythm:rhythmAOA,meas:measAOA};
+window.MP_NAMES={mpmix:'Channel Incrementality',winback:'Win-back',intl:'International',gov:'Budget Governance',rhythm:'Operating Rhythm',meas:'Measurement'};
 
 /* ---------- wiring ---------- */
 function setPath(path,v){const ks=path.split('.').map(k=>k.replace('~','|')),o=mp();let x=o;
@@ -2905,7 +3028,9 @@ function wireInputs(){$('#view').querySelectorAll('.mp-in').forEach(el=>el.oncha
 window.mpWire=function(tab){wireInputs();
  const b=$('#mp-best');if(b)b.onclick=()=>{S.split={...splitOf(),brand:+b.dataset.v};syncSplit();changed()};
  const r=(id,k)=>{const e=$(id);if(e)e.onclick=()=>{k.forEach(x=>delete mp()[x]);changed()}};
- r('#mp-reset-econ',['retailer','brand','network','balance']);r('#mp-reset-ch',['ch']);r('#mp-reset-wb',['wb']);r('#mp-reset-mk',['mk'])};
+ r('#mp-reset-econ',['retailer','brand','network','balance']);r('#mp-reset-ch',['ch']);r('#mp-reset-wb',['wb']);r('#mp-reset-mk',['mk']);r('#mp-reset-gov',['gov']);
+ const ra=$('#mp-reset-act');if(ra)ra.onclick=()=>{const R=compute(UI.tier);delete (mp().act||{})[TIERS[R.tier]];changed()};
+ const ea=$('#mp-ex-act');if(ea)ea.onclick=()=>{const R=compute(UI.tier),P=monthlyPlan(R),T=TIERS[R.tier];mp().act=mp().act||{};const a=mp().act[T]={};[0.97,1.08,0.88].forEach((f,i)=>{if(P[i])a[P[i].m]=Math.round(P[i].total*f)});changed()}};
 
 /* ---------- JD-based split sliders (section 2) ---------- */
 const splitOf=()=>({...SPLIT_DEF,...(S.split||{})});
